@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🃏 ブラックジャック</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050d05;--felt:#0a2010;--felt-hi:#0d2814;--gold:#c9a84c;--gold2:#e8c96d;
+  --red:#b91c1c;--white:#faf5e4;--dim:#3d6640;--text:#d4edda;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Noto Sans JP',sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:20px 12px;
+  background-image:
+    radial-gradient(ellipse at 50% 0%,rgba(10,32,16,.9),transparent 70%),
+    repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.008) 20px,rgba(255,255,255,.008) 21px);
+}
+h1.title{
+  font-family:'Cormorant Garamond',serif;font-size:clamp(26px,6vw,48px);
+  font-weight:700;color:var(--gold);letter-spacing:4px;
+  text-shadow:0 2px 12px rgba(201,168,76,.3);
+  margin-bottom:2px;text-align:center;
+}
+.subtitle{font-size:11px;color:var(--dim);letter-spacing:4px;margin-bottom:18px;text-align:center}
+
+.medal-bar{
+  width:min(560px,100%);display:flex;justify-content:space-between;align-items:center;
+  border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:10px 18px;margin-bottom:16px;
+  background:rgba(201,168,76,.04);
+}
+.medal-bar .lbl{font-size:11px;color:var(--dim);letter-spacing:2px}
+.medal-bar .val{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold2);font-weight:700}
+
+/* Table */
+.table{
+  width:min(560px,100%);
+  background:radial-gradient(ellipse at 50% 40%,var(--felt-hi),var(--felt) 80%);
+  border:5px solid #2d4a1e;border-radius:28px;padding:24px 20px;
+  box-shadow:0 8px 40px rgba(0,0,0,.8),inset 0 0 30px rgba(0,0,0,.2);
+  position:relative;overflow:hidden;margin-bottom:16px;
+}
+.table::after{
+  content:'♠  ♥  ♦  ♣';
+  position:absolute;bottom:8px;right:16px;
+  font-size:14px;color:rgba(255,255,255,.06);letter-spacing:6px;
+}
+.hand-section{margin-bottom:12px}
+.hand-lbl{
+  font-size:11px;color:var(--dim);letter-spacing:3px;
+  margin-bottom:8px;display:flex;align-items:center;gap:10px;
+}
+.score-badge{
+  background:rgba(0,0,0,.4);border:1px solid rgba(201,168,76,.2);
+  border-radius:20px;padding:2px 10px;
+  font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold2);font-weight:700;
+  min-width:40px;text-align:center;
+}
+.score-badge.bust{background:rgba(185,28,28,.3);border-color:rgba(185,28,28,.5);color:#ff8888}
+.score-badge.bj{background:rgba(201,168,76,.2);border-color:var(--gold);color:var(--gold2);animation:bj-glow .6s ease-in-out infinite alternate}
+@keyframes bj-glow{from{box-shadow:0 0 5px rgba(201,168,76,.3)}to{box-shadow:0 0 15px rgba(201,168,76,.6)}}
+.cards{display:flex;gap:8px;flex-wrap:wrap;min-height:90px;align-items:center}
+
+/* Cards */
+.card{
+  width:clamp(54px,11vw,70px);height:clamp(78px,16vw,100px);
+  background:var(--white);border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:clamp(4px,1vw,7px);
+  box-shadow:0 2px 8px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.5);
+  position:relative;animation:card-deal .25s ease-out;
+}
+@keyframes card-deal{from{transform:translateY(-20px) rotate(-5deg);opacity:0}to{transform:none;opacity:1}}
+.card.back{
+  background:linear-gradient(135deg,#1a3a2a,#0d2018);
+  cursor:default;overflow:hidden;
+}
+.card.back::before{
+  content:'';position:absolute;inset:4px;
+  border:2px solid rgba(201,168,76,.2);border-radius:4px;
+}
+.card.back::after{
+  content:'♠♣♥♦';font-size:16px;color:rgba(255,255,255,.07);
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);letter-spacing:2px;
+}
+.card .rank{font-size:clamp(13px,2.8vw,17px);font-weight:700;line-height:1;letter-spacing:-1px}
+.card .suit{font-size:clamp(16px,3.5vw,22px);line-height:1}
+.card .rank-b{font-size:clamp(11px,2.2vw,14px);font-weight:600;transform:rotate(180deg);line-height:1}
+.card.red .rank,.card.red .rank-b{color:var(--red)}
+.card.black .rank,.card.black .rank-b{color:#111}
+
+.divider{border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0}
+
+/* Result */
+.result{
+  text-align:center;margin-bottom:16px;min-height:52px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+}
+.result-main{font-family:'Cormorant Garamond',serif;font-size:clamp(18px,4vw,26px);font-weight:700;color:var(--gold2);min-height:32px}
+.result-sub{font-size:12px;color:var(--dim)}
+
+/* Controls below table */
+.bet-section{
+  width:min(560px,100%);display:flex;align-items:center;justify-content:center;gap:12px;
+  margin-bottom:14px;flex-wrap:wrap;
+}
+.bet-btn{
+  background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);color:var(--gold);
+  width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;transition:all .15s;
+}
+.bet-btn:hover{background:rgba(201,168,76,.2)}
+.bet-lbl{font-size:12px;color:var(--dim)}
+.bet-num{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold2);min-width:54px;text-align:center;font-weight:700}
+
+.action-row{
+  width:min(560px,100%);display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.act-btn{
+  padding:12px 28px;border-radius:8px;border:2px solid;cursor:pointer;
+  font-size:15px;font-weight:700;letter-spacing:1px;transition:all .15s;
+  font-family:'Noto Sans JP',sans-serif;
+}
+.btn-deal{background:rgba(10,60,20,.8);border-color:#2d8a3e;color:#7fff9a}
+.btn-deal:hover{background:rgba(10,80,26,.9);transform:translateY(-2px)}
+.btn-hit{background:rgba(10,40,60,.8);border-color:#1d6fa5;color:#88ccff}
+.btn-hit:hover{background:rgba(10,50,80,.9);transform:translateY(-2px)}
+.btn-stand{background:rgba(60,10,10,.8);border-color:#a53030;color:#ffaaaa}
+.btn-stand:hover{background:rgba(80,12,12,.9);transform:translateY(-2px)}
+.btn-double{background:rgba(50,35,5,.8);border-color:#a07a10;color:#ffd97a}
+.btn-double:hover{background:rgba(65,45,5,.9);transform:translateY(-2px)}
+
+/* Rules */
+.rules{
+  width:min(560px,100%);background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.1);
+  border-radius:10px;padding:14px 18px;font-size:12px;color:var(--dim);line-height:2;
+}
+.rules strong{color:var(--gold);font-size:11px;letter-spacing:2px;display:block;margin-bottom:4px}
+
+#notif{
+  position:fixed;top:16px;right:16px;padding:10px 18px;border-radius:8px;
+  font-size:14px;z-index:999;transform:translateX(200%);transition:transform .3s;
+  background:#007733;color:#fff;
+}
+#notif.show{transform:translateX(0)}
+#notif.bad{background:#cc0033}
+</style>
+</head>
+<body>
+<h1 class="title">BLACKJACK</h1>
+<div class="subtitle">— 21 TO WIN —</div>
+
+<div class="medal-bar">
+  <span class="lbl">💰 所持メダル</span>
+  <span class="val" id="medals">300</span>
+</div>
+
+<div class="table">
+  <div class="hand-section">
+    <div class="hand-lbl">
+      DEALER
+      <span class="score-badge" id="dealer-score"></span>
+    </div>
+    <div class="cards" id="dealer-cards"></div>
+  </div>
+  <hr class="divider">
+  <div class="hand-section">
+    <div class="hand-lbl">
+      YOU
+      <span class="score-badge" id="player-score"></span>
+    </div>
+    <div class="cards" id="player-cards"></div>
+  </div>
+  <div class="result">
+    <div class="result-main" id="result-main">ゲームをスタートしてください</div>
+    <div class="result-sub" id="result-sub"></div>
+  </div>
+</div>
+
+<div class="bet-section">
+  <button class="bet-btn" id="bet-m">－</button>
+  <span class="bet-lbl">BET</span>
+  <span class="bet-num" id="bet-val">10</span>
+  <span class="bet-lbl">メダル</span>
+  <button class="bet-btn" id="bet-p">＋</button>
+</div>
+
+<div class="action-row">
+  <button class="act-btn btn-deal" id="btn-deal">🃏 DEAL</button>
+  <button class="act-btn btn-hit" id="btn-hit" style="display:none">HIT</button>
+  <button class="act-btn btn-stand" id="btn-stand" style="display:none">STAND</button>
+  <button class="act-btn btn-double" id="btn-double" style="display:none">DOUBLE</button>
+</div>
+
+<div class="rules">
+  <strong>— RULES —</strong>
+  ブラックジャック (A+絵札) ×2.5 配当 ／
+  勝利 ×2 ／ 引き分け 返却 ／
+  ディーラーは16以下でヒット ／
+  ダブルダウンは最初の2枚のみ
+</div>
+
+<div id="notif"></div>
+
+<script>
+const SUITS=['♠','♥','♦','♣'];
+const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+let medals=+localStorage.getItem('bj_medals')||300;
+let deck=[],player=[],dealer=[],bet=10,playerBet=10,phase='bet';
+
+function save(){localStorage.setItem('bj_medals',medals)}
+function updMedals(){document.getElementById('medals').textContent=medals}
+
+const AC=window.AudioContext||window.webkitAudioContext;
+let ac;
+function ga(){if(!ac)try{ac=new AC()}catch(e){}return ac}
+function tone(f,d,t='sine',v=.25){
+  const a=ga();if(!a)return;
+  const o=a.createOscillator(),g=a.createGain();
+  o.connect(g);g.connect(a.destination);
+  o.type=t;o.frequency.value=f;
+  g.gain.setValueAtTime(v,a.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);
+  o.start();o.stop(a.currentTime+d);
+}
+function sndCard(){tone(550+Math.random()*150,.07,'triangle',.22)}
+function sndWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.18,'sine',.28),i*100))}
+function sndBJ(){[784,880,1047,1318,1568].forEach((f,i)=>setTimeout(()=>tone(f,.15,'sine',.32),i*120))}
+function sndLose(){[400,350,280].forEach((f,i)=>setTimeout(()=>tone(f,.2,'sawtooth',.18),i*150))}
+function sndClick(){tone(440,.05,'square',.08)}
+function sndBust(){tone(200,.4,'sawtooth',.2)}
+
+function notify(msg,ok=true){
+  const el=document.getElementById('notif');el.textContent=msg;
+  el.className=ok?'show':'show bad';clearTimeout(el._t);el._t=setTimeout(()=>el.className='',2300);
+}
+
+function buildDeck(){
+  deck=[];
+  for(const s of SUITS)for(const r of RANKS)deck.push({s,r});
+  for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}
+}
+function cardVal(c){if(c.r==='A')return 11;if(['J','Q','K'].includes(c.r))return 10;return +c.r}
+function handScore(h){
+  let s=h.reduce((a,c)=>a+cardVal(c),0);
+  let aces=h.filter(c=>c.r==='A').length;
+  while(s>21&&aces){s-=10;aces--}
+  return s;
+}
+function cardHTML(c,hidden=false){
+  if(hidden)return`<div class="card back"></div>`;
+  const red=c.s==='♥'||c.s==='♦';
+  return`<div class="card ${red?'red':'black'}">
+    <span class="rank">${c.r}${c.s}</span>
+    <span class="suit">${c.s}</span>
+    <span class="rank-b">${c.r}${c.s}</span>
+  </div>`;
+}
+
+function updBet(){document.getElementById('bet-val').textContent=bet}
+document.getElementById('bet-m').addEventListener('click',()=>{if(phase!=='bet')return;bet=Math.max(5,bet-5);sndClick();updBet()});
+document.getElementById('bet-p').addEventListener('click',()=>{if(phase!=='bet')return;bet=Math.min(medals,bet+5);sndClick();updBet()});
+
+function renderHands(hideDealer=true){
+  document.getElementById('dealer-cards').innerHTML=dealer.map((c,i)=>cardHTML(c,hideDealer&&i===1)).join('');
+  document.getElementById('player-cards').innerHTML=player.map(c=>cardHTML(c)).join('');
+  const ps=handScore(player);
+  const ds=hideDealer?cardVal(dealer[0]):handScore(dealer);
+  const psEl=document.getElementById('player-score');
+  psEl.textContent=ps;
+  psEl.className='score-badge'+(ps>21?' bust':ps===21&&player.length===2?' bj':'');
+  document.getElementById('dealer-score').textContent=hideDealer?`${cardVal(dealer[0])}+?`:ds;
+}
+function showBtns(hit,stand,dbl){
+  document.getElementById('btn-hit').style.display=hit?'inline-flex':'none';
+  document.getElementById('btn-stand').style.display=stand?'inline-flex':'none';
+  document.getElementById('btn-double').style.display=dbl?'inline-flex':'none';
+  document.getElementById('btn-deal').style.display=(hit||stand)?'none':'inline-flex';
+}
+function setResult(main,sub){
+  document.getElementById('result-main').textContent=main;
+  document.getElementById('result-sub').textContent=sub;
+}
+
+document.getElementById('btn-deal').addEventListener('click',()=>{
+  ga();
+  if(medals<bet){notify('メダルが足りません',false);return}
+  medals-=bet;playerBet=bet;save();updMedals();
+  buildDeck();player=[deck.pop(),deck.pop()];dealer=[deck.pop(),deck.pop()];
+  phase='play';renderHands(true);
+  setResult('','キープするかヒット、スタンドを選択');
+  const canDbl=medals>=playerBet;
+  showBtns(true,true,canDbl);
+  [0,1,2,3].forEach(i=>setTimeout(()=>sndCard(),i*100));
+  if(handScore(player)===21){
+    setTimeout(()=>{stand()},300);
+  }
+});
+
+document.getElementById('btn-hit').addEventListener('click',hit);
+document.getElementById('btn-stand').addEventListener('click',stand);
+document.getElementById('btn-double').addEventListener('click',doubleDown);
+
+function hit(){
+  if(phase!=='play')return;
+  player.push(deck.pop());renderHands(true);sndCard();
+  document.getElementById('btn-double').style.display='none';
+  if(handScore(player)>21){bust()}
+}
+function stand(){
+  if(phase!=='play'&&phase!=='deal')return;
+  phase='dealer';
+  renderHands(false);
+  sndCard();
+  let delay=300;
+  function dealerDraw(){
+    if(handScore(dealer)<17&&deck.length){
+      setTimeout(()=>{dealer.push(deck.pop());renderHands(false);sndCard();dealerDraw()},delay);
+    } else {
+      setTimeout(evalResult,400);
+    }
+  }
+  dealerDraw();
+  showBtns(false,false,false);
+}
+function doubleDown(){
+  if(!spendMedals(playerBet)){notify('メダルが足りません',false);return}
+  playerBet*=2;player.push(deck.pop());renderHands(true);sndCard();
+  if(handScore(player)>21){bust();return}
+  stand();
+}
+function spendMedals(n){if(medals<n)return false;medals-=n;save();updMedals();return true}
+
+function bust(){
+  phase='bet';showBtns(false,false,false);
+  setResult('💥 バスト！','残念…');sndBust();
+}
+function evalResult(){
+  const ps=handScore(player),ds=handScore(dealer);
+  let msg='',sub='',win=0;
+  if(ps===21&&player.length===2&&!(ds===21&&dealer.length===2)){
+    msg='🎉 BLACKJACK!!';sub=`×2.5  →  +${Math.floor(playerBet*1.5)} メダル`;
+    win=Math.floor(playerBet*2.5);sndBJ();
+  } else if(ds>21){
+    msg='🎉 ディーラーバスト！';sub=`勝利  →  +${playerBet} メダル`;
+    win=playerBet*2;sndWin();
+  } else if(ps>ds){
+    msg='🎉 あなたの勝ち！';sub=`勝利  →  +${playerBet} メダル`;
+    win=playerBet*2;sndWin();
+  } else if(ps===ds){
+    msg='🤝 引き分け';sub='ベット返却';
+    win=playerBet;sndClick();
+  } else {
+    msg='😔 負け';sub='ディーラーの勝ち';
+    win=0;sndLose();
+  }
+  if(win){medals+=win;save();updMedals()}
+  setResult(msg,sub);
+  phase='bet';showBtns(false,false,false);
+}
+updMedals();updBet();
+</script>
+</body>
+</html>

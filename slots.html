@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎲 スロット</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Noto+Sans+JP:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07050f;--panel:#0e0c1a;--purple:#7c3aed;--violet:#a855f7;
+  --gold:#fbbf24;--neon:#e879f9;--text:#f3f0ff;--dim:#6b6b99;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Noto Sans JP',sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:20px 12px;
+  background-image:
+    radial-gradient(ellipse at 30% 20%,rgba(124,58,237,.07),transparent 50%),
+    radial-gradient(ellipse at 70% 80%,rgba(232,121,249,.06),transparent 50%);
+}
+h1.title{
+  font-family:'Russo One',sans-serif;font-size:clamp(26px,6vw,48px);
+  color:transparent;
+  background:linear-gradient(135deg,var(--violet),var(--neon),var(--gold));
+  -webkit-background-clip:text;background-clip:text;
+  letter-spacing:4px;margin-bottom:4px;text-align:center;
+  filter:drop-shadow(0 0 16px rgba(232,121,249,.4));
+}
+.subtitle{font-size:11px;color:var(--dim);letter-spacing:4px;margin-bottom:20px;text-align:center}
+
+.medal-bar{
+  width:min(460px,100%);display:flex;justify-content:space-between;align-items:center;
+  background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);
+  border-radius:10px;padding:10px 18px;margin-bottom:16px;
+}
+.medal-bar .lbl{font-size:11px;color:var(--dim);letter-spacing:2px}
+.medal-bar .val{font-family:'Russo One',sans-serif;font-size:20px;color:var(--gold)}
+
+.machine{
+  width:min(460px,100%);
+  background:linear-gradient(160deg,#120f1e,#0a0814);
+  border:2px solid rgba(124,58,237,.35);border-radius:24px;padding:28px 24px;
+  box-shadow:0 0 50px rgba(124,58,237,.15),inset 0 1px 0 rgba(255,255,255,.04);
+  position:relative;overflow:hidden;
+}
+.machine::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--violet),var(--neon),var(--violet),transparent);
+}
+
+/* Jackpot display */
+.jackpot-disp{
+  text-align:center;margin-bottom:20px;
+}
+.jackpot-lbl{font-size:10px;color:var(--dim);letter-spacing:3px}
+.jackpot-num{font-family:'Russo One',sans-serif;font-size:32px;color:var(--gold);
+  text-shadow:0 0 15px rgba(251,191,36,.5);animation:gold-pulse 2s ease-in-out infinite alternate}
+@keyframes gold-pulse{from{text-shadow:0 0 10px rgba(251,191,36,.4)}to{text-shadow:0 0 25px rgba(251,191,36,.8),0 0 50px rgba(251,191,36,.3)}}
+
+/* Reels */
+.reels-outer{
+  background:#050410;border:2px solid #1a1530;border-radius:14px;
+  padding:12px;margin-bottom:16px;position:relative;
+}
+.reels-outer::before,.reels-outer::after{
+  content:'';position:absolute;left:0;right:0;height:30%;pointer-events:none;z-index:2;
+}
+.reels-outer::before{top:0;background:linear-gradient(to bottom,#050410,transparent);border-radius:12px 12px 0 0}
+.reels-outer::after{bottom:0;background:linear-gradient(to top,#050410,transparent);border-radius:0 0 12px 12px}
+.payline-bar{
+  position:absolute;top:50%;left:8px;right:8px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--neon),transparent);
+  transform:translateY(-50%);z-index:3;pointer-events:none;
+  animation:payline-glow 2s ease-in-out infinite alternate;
+}
+@keyframes payline-glow{from{opacity:.4}to{opacity:.9}}
+.reels{display:flex;gap:8px;position:relative;z-index:1}
+.reel{
+  flex:1;height:110px;
+  background:linear-gradient(to bottom,#040312,#080620,#040312);
+  border:1px solid #1a1530;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:52px;overflow:hidden;position:relative;transition:filter .1s;
+}
+.reel.spinning{filter:blur(3px);animation:reel-anim .07s linear infinite}
+@keyframes reel-anim{0%{transform:translateY(-8px)}100%{transform:translateY(8px)}}
+.reel-shadow{position:absolute;top:0;left:0;right:0;bottom:0;
+  box-shadow:inset 0 12px 16px rgba(0,0,0,.5),inset 0 -12px 16px rgba(0,0,0,.5);pointer-events:none}
+
+/* Result */
+.result-area{
+  min-height:52px;text-align:center;margin-bottom:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+}
+.result-main{font-family:'Russo One',sans-serif;font-size:clamp(16px,4vw,22px);color:var(--gold);
+  text-shadow:0 0 10px rgba(251,191,36,.4);letter-spacing:2px}
+.result-sub{font-size:12px;color:var(--dim)}
+
+/* Bet */
+.bet-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:16px}
+.bet-btn{
+  background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);
+  color:var(--text);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:18px;
+  transition:all .15s;
+}
+.bet-btn:hover{background:rgba(124,58,237,.35);border-color:var(--purple)}
+.bet-lbl{font-size:12px;color:var(--dim)}
+.bet-val{font-family:'Russo One',sans-serif;font-size:24px;color:var(--gold);min-width:54px;text-align:center}
+
+/* Spin button */
+.spin-btn{
+  display:block;width:100%;padding:16px;
+  background:linear-gradient(135deg,#5b21b6,#7c3aed,#5b21b6);
+  border:2px solid var(--violet);border-radius:40px;
+  color:#fff;font-size:18px;font-weight:700;letter-spacing:3px;
+  font-family:'Russo One',sans-serif;cursor:pointer;
+  box-shadow:0 4px 24px rgba(124,58,237,.5),inset 0 1px 0 rgba(255,255,255,.15);
+  transition:all .15s;margin-bottom:16px;
+}
+.spin-btn:hover{background:linear-gradient(135deg,#6d28d9,#8b5cf6,#6d28d9);transform:translateY(-2px);box-shadow:0 6px 32px rgba(124,58,237,.7)}
+.spin-btn:active{transform:scale(.97)}
+.spin-btn:disabled{background:linear-gradient(135deg,#333,#444);border-color:#555;box-shadow:none;cursor:not-allowed}
+
+/* Payout */
+.payout{
+  background:rgba(0,0,0,.3);border:1px solid rgba(124,58,237,.15);
+  border-radius:10px;padding:12px;
+}
+.pt-title{font-size:10px;color:var(--dim);letter-spacing:3px;margin-bottom:8px;text-align:center}
+.pt-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
+.pt-row:last-child{border-bottom:none}
+.pt-sym{font-size:18px;margin-right:6px}
+.pt-mult{font-family:'Russo One',sans-serif;color:var(--gold);font-size:14px}
+
+/* Win flash */
+.win-flash{position:absolute;top:0;left:0;right:0;bottom:0;border-radius:22px;pointer-events:none;opacity:0;background:rgba(251,191,36,.06)}
+.win-flash.active{animation:win-anim .4s ease 3}
+@keyframes win-anim{0%,100%{opacity:0}50%{opacity:1}}
+
+#notif{
+  position:fixed;top:16px;right:16px;padding:10px 18px;border-radius:8px;
+  font-size:14px;z-index:999;transform:translateX(200%);transition:transform .3s;
+  background:#007733;color:#fff;
+}
+#notif.show{transform:translateX(0)}
+#notif.bad{background:#cc0033}
+</style>
+</head>
+<body>
+<h1 class="title">SLOTS</h1>
+<div class="subtitle">— LUCKY SPIN —</div>
+
+<div class="medal-bar">
+  <span class="lbl">💰 所持メダル</span>
+  <span class="val" id="medals">300</span>
+</div>
+
+<div class="machine">
+  <div class="win-flash" id="win-flash"></div>
+
+  <div class="jackpot-disp">
+    <div class="jackpot-lbl">JACKPOT PRIZE</div>
+    <div class="jackpot-num" id="jackpot-num">50,000</div>
+  </div>
+
+  <div class="reels-outer">
+    <div class="payline-bar"></div>
+    <div class="reels">
+      <div class="reel" id="r0">🍒<div class="reel-shadow"></div></div>
+      <div class="reel" id="r1">⭐<div class="reel-shadow"></div></div>
+      <div class="reel" id="r2">🍒<div class="reel-shadow"></div></div>
+    </div>
+  </div>
+
+  <div class="result-area">
+    <div class="result-main" id="result-main">スピンしてメダルを稼ごう！</div>
+    <div class="result-sub" id="result-sub"></div>
+  </div>
+
+  <div class="bet-row">
+    <button class="bet-btn" id="bet-m">－</button>
+    <span class="bet-lbl">BET</span>
+    <span class="bet-val" id="bet-val">10</span>
+    <span class="bet-lbl">メダル</span>
+    <button class="bet-btn" id="bet-p">＋</button>
+  </div>
+
+  <button class="spin-btn" id="spin-btn">🎲 S P I N !</button>
+
+  <div class="payout">
+    <div class="pt-title">— PAYOUT TABLE —</div>
+    <div class="pt-row"><span><span class="pt-sym">7️⃣7️⃣7️⃣</span>トリプルセブン</span><span class="pt-mult">×50</span></div>
+    <div class="pt-row"><span><span class="pt-sym">💎💎💎</span>ダイヤモンド</span><span class="pt-mult">×30</span></div>
+    <div class="pt-row"><span><span class="pt-sym">🎰🎰🎰</span>スロット3揃い</span><span class="pt-mult">×20</span></div>
+    <div class="pt-row"><span><span class="pt-sym">⭐⭐⭐</span>スター3揃い</span><span class="pt-mult">×15</span></div>
+    <div class="pt-row"><span><span class="pt-sym">❓❓❓</span>同じ3揃い</span><span class="pt-mult">×10</span></div>
+    <div class="pt-row"><span><span class="pt-sym">❓❓＿</span>同じ2揃い</span><span class="pt-mult">×3</span></div>
+    <div class="pt-row"><span><span class="pt-sym">🍒__</span>チェリー1個</span><span class="pt-mult">×2</span></div>
+  </div>
+</div>
+
+<div id="notif"></div>
+
+<script>
+const SYMS=['🍒','🍋','🍊','🍇','⭐','🔔','💎','🎰','7️⃣','🎱'];
+const WEIGHTS=[22,18,16,13,10,8,5,4,2,2];
+
+let medals=+localStorage.getItem('sl_medals')||300;
+let bet=10,spinning=false;
+
+function save(){localStorage.setItem('sl_medals',medals)}
+function updUI(){
+  document.getElementById('medals').textContent=medals;
+  document.getElementById('bet-val').textContent=bet;
+}
+function notify(msg,ok=true){
+  const el=document.getElementById('notif');el.textContent=msg;
+  el.className=ok?'show':'show bad';clearTimeout(el._t);el._t=setTimeout(()=>el.className='',2300);
+}
+
+const AC=window.AudioContext||window.webkitAudioContext;
+let ac;
+function ga(){if(!ac)try{ac=new AC()}catch(e){}return ac}
+function tone(f,d,t='sine',v=.25){
+  const a=ga();if(!a)return;
+  const o=a.createOscillator(),g=a.createGain();
+  o.connect(g);g.connect(a.destination);
+  o.type=t;o.frequency.value=f;
+  g.gain.setValueAtTime(v,a.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);
+  o.start();o.stop(a.currentTime+d);
+}
+function sndSpin(){tone(200+Math.random()*100,.04,'square',.1)}
+function sndStop(){tone(400,.1,'sine',.2)}
+function sndWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.18,'sine',.28),i*100))}
+function sndJackpot(){const s=[784,880,1047,1318,1568,1318,1047,1318,1568];s.forEach((f,i)=>setTimeout(()=>tone(f,.15,'sine',.35),i*130))}
+function sndLose(){tone(220,.35,'sawtooth',.15)}
+function sndClick(){tone(440,.05,'square',.08)}
+
+function pickSym(){
+  let r=Math.random()*100,c=0;
+  for(let i=0;i<SYMS.length;i++){c+=WEIGHTS[i];if(r<c)return SYMS[i]}
+  return SYMS[0];
+}
+
+document.getElementById('bet-m').addEventListener('click',()=>{if(spinning)return;bet=Math.max(5,bet-5);sndClick();updUI()});
+document.getElementById('bet-p').addEventListener('click',()=>{if(spinning)return;bet=Math.min(medals,bet+5);sndClick();updUI()});
+
+document.getElementById('spin-btn').addEventListener('click',()=>{
+  ga();
+  if(spinning)return;
+  if(medals<bet){notify('メダルが足りません',false);return}
+  medals-=bet;save();updUI();
+  spinning=true;
+  document.getElementById('spin-btn').disabled=true;
+  document.getElementById('result-main').textContent='';
+  document.getElementById('result-sub').textContent='';
+
+  const final=[pickSym(),pickSym(),pickSym()];
+  const ivs=[0,1,2].map(i=>setInterval(()=>{
+    document.getElementById(`r${i}`).childNodes[0].textContent=SYMS[Math.floor(Math.random()*SYMS.length)];
+    document.getElementById(`r${i}`).classList.add('spinning');
+    sndSpin();
+  },75));
+
+  [0,1,2].forEach((i,idx)=>{
+    setTimeout(()=>{
+      clearInterval(ivs[idx]);
+      const el=document.getElementById(`r${idx}`);
+      el.classList.remove('spinning');
+      el.childNodes[0].textContent=final[idx];
+      sndStop();
+      if(idx===2){setTimeout(()=>evalResult(final),200)}
+    },(idx+1)*650+Math.random()*200);
+  });
+});
+
+function evalResult(s){
+  spinning=false;
+  document.getElementById('spin-btn').disabled=false;
+
+  let mult=0,msg='',submsg='';
+  const all3=s[0]===s[1]&&s[1]===s[2];
+  const two=s[0]===s[1]||s[1]===s[2]||s[0]===s[2];
+
+  if(s[0]==='7️⃣'&&s[1]==='7️⃣'&&s[2]==='7️⃣'){mult=50;msg='🎰 JACKPOT!! 777 🎰';submsg='超大当たり！！'}
+  else if(s[0]==='💎'&&s[1]==='💎'&&s[2]==='💎'){mult=30;msg='💎 ダイヤモンド！';submsg='大当たり！'}
+  else if(s[0]==='🎰'&&s[1]==='🎰'&&s[2]==='🎰'){mult=20;msg='🎰 スロット3揃い！';submsg='大当たり！'}
+  else if(s[0]==='⭐'&&s[1]==='⭐'&&s[2]==='⭐'){mult=15;msg='⭐ スター3揃い！';submsg='当たり！'}
+  else if(all3){mult=10;msg=`${s[0]} 3つ揃い！`;submsg='当たり！'}
+  else if(two){mult=3;msg='2つ揃い！';submsg='小当たり'}
+  else if(s[0]==='🍒'||s[1]==='🍒'||s[2]==='🍒'){mult=2;msg='🍒 チェリー！';submsg='ちょっとラッキー'}
+
+  if(mult){
+    const win=bet*mult;medals+=win;save();updUI();
+    document.getElementById('result-main').textContent=msg;
+    document.getElementById('result-sub').textContent=`×${mult}  →  +${win} メダル！`;
+    mult>=20?sndJackpot():sndWin();
+    const fl=document.getElementById('win-flash');
+    fl.classList.remove('active');void fl.offsetWidth;fl.classList.add('active');
+  } else {
+    document.getElementById('result-main').textContent='はずれ…';
+    document.getElementById('result-sub').textContent='もう一度！';
+    sndLose();
+  }
+}
+updUI();
+</script>
+</body>
+</html>

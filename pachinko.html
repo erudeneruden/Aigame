@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 パチンコ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a14;--panel:#10101e;--pink:#ff66cc;--cyan:#00ddff;
+  --yellow:#ffe44d;--green:#44ff88;--text:#f0f0ff;--dim:#5566aa;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'M PLUS Rounded 1c',sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:16px 8px;
+  background-image:radial-gradient(ellipse at 50% 0%,rgba(255,102,204,.06),transparent 60%);
+}
+h1.title{
+  font-size:clamp(20px,5vw,34px);font-weight:800;
+  background:linear-gradient(135deg,var(--pink),var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;letter-spacing:2px;margin-bottom:4px;text-align:center;
+}
+.subtitle{font-size:11px;color:var(--dim);letter-spacing:3px;margin-bottom:14px;text-align:center}
+
+.top-bar{
+  width:min(420px,100%);display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;
+}
+.stat-box{
+  flex:1;min-width:80px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:8px 10px;text-align:center;
+}
+.stat-lbl{font-size:10px;color:var(--dim);margin-bottom:2px}
+.stat-val{font-size:18px;font-weight:700;color:var(--yellow)}
+.stat-val.pink{color:var(--pink)}
+.stat-val.green{color:var(--green)}
+
+.exchange{
+  width:min(420px,100%);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:12px;margin-bottom:12px;
+}
+.ex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ex-row span{font-size:12px;color:var(--dim)}
+.ex-row input{
+  background:#0a0a1e;border:1px solid rgba(255,255,255,.15);color:var(--text);
+  padding:7px 10px;border-radius:7px;width:100px;font-size:13px;
+  font-family:'M PLUS Rounded 1c',sans-serif;
+}
+.ex-btn{
+  padding:7px 14px;border-radius:7px;border:1px solid;cursor:pointer;font-size:12px;
+  font-family:'M PLUS Rounded 1c',sans-serif;font-weight:700;transition:all .15s;
+}
+.ex-btn.buy{background:rgba(0,221,255,.1);border-color:var(--cyan);color:var(--cyan)}
+.ex-btn.buy:hover{background:rgba(0,221,255,.2)}
+.ex-btn.cash{background:rgba(68,255,136,.1);border-color:var(--green);color:var(--green)}
+.ex-btn.cash:hover{background:rgba(68,255,136,.2)}
+
+.machine-wrap{position:relative;width:min(420px,100%)}
+#pcanvas{display:block;width:100%;border-radius:12px;border:2px solid rgba(255,255,255,.1);background:#050510}
+
+.controls{
+  width:min(420px,100%);display:flex;gap:10px;align-items:center;
+  margin-top:10px;flex-wrap:wrap;
+}
+.power-wrap{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);flex:1}
+.power-wrap input[type=range]{flex:1;accent-color:var(--pink)}
+.power-num{color:var(--pink);font-weight:700;min-width:20px}
+.shoot-btn{
+  padding:10px 22px;border-radius:20px;
+  background:linear-gradient(135deg,#cc0066,#ff3399);
+  border:2px solid #ff66bb;color:#fff;font-size:14px;font-weight:800;
+  cursor:pointer;letter-spacing:1px;transition:all .15s;
+  box-shadow:0 3px 15px rgba(255,51,153,.4);
+  font-family:'M PLUS Rounded 1c',sans-serif;
+}
+.shoot-btn:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(255,51,153,.6)}
+.shoot-btn:active{transform:scale(.95)}
+.auto-btn{
+  padding:10px 16px;border-radius:20px;border:2px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.05);color:var(--dim);font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .15s;font-family:'M PLUS Rounded 1c',sans-serif;
+}
+.auto-btn.on{background:rgba(255,102,204,.2);border-color:var(--pink);color:var(--pink)}
+
+.jackpot-msg{
+  width:min(420px,100%);text-align:center;font-size:22px;font-weight:800;
+  color:var(--yellow);min-height:36px;margin-top:8px;
+  text-shadow:0 0 15px rgba(255,228,77,.6);
+  animation:jackpot-flash 0s;
+}
+@keyframes jackpot-flash{0%,100%{opacity:1}50%{opacity:.3}}
+.jackpot-msg.flash{animation:jackpot-flash .3s ease 4}
+
+#notif{
+  position:fixed;top:16px;right:16px;padding:10px 18px;border-radius:8px;
+  font-size:14px;z-index:999;transform:translateX(200%);transition:transform .3s;
+  background:#007733;color:#fff;
+}
+#notif.show{transform:translateX(0)}
+#notif.bad{background:#cc0033}
+</style>
+</head>
+<body>
+<h1 class="title">🎯 パチンコ</h1>
+<div class="subtitle">— ARCADE BALL GAME —</div>
+
+<div class="top-bar">
+  <div class="stat-box"><div class="stat-lbl">💰 所持メダル</div><div class="stat-val" id="medals">300</div></div>
+  <div class="stat-box"><div class="stat-lbl">🎱 所持玉</div><div class="stat-val pink" id="balls">0</div></div>
+  <div class="stat-box"><div class="stat-lbl">✨ 獲得玉</div><div class="stat-val green" id="win-balls">0</div></div>
+  <div class="stat-box"><div class="stat-lbl">🎉 大当たり</div><div class="stat-val" id="jackpots">0</div></div>
+</div>
+
+<div class="exchange">
+  <div class="ex-row">
+    <span>メダル → 玉（1:4）</span>
+    <input type="number" id="buy-input" placeholder="メダル数" min="1">
+    <button class="ex-btn buy" id="buy-btn">玉を買う</button>
+    <button class="ex-btn cash" id="cash-btn">精算（4:1）</button>
+  </div>
+</div>
+
+<div class="machine-wrap">
+  <canvas id="pcanvas" width="380" height="520"></canvas>
+</div>
+
+<div class="controls">
+  <div class="power-wrap">
+    <span>強さ</span>
+    <input type="range" id="power" min="1" max="10" value="5">
+    <span class="power-num" id="power-val">5</span>
+  </div>
+  <button class="shoot-btn" id="shoot-btn">🎯 発射！</button>
+  <button class="auto-btn" id="auto-btn">AUTO</button>
+</div>
+
+<div class="jackpot-msg" id="jackpot-msg"></div>
+<div id="notif"></div>
+
+<script>
+const cv=document.getElementById('pcanvas');
+const ctx=cv.getContext('2d');
+const W=380,H=520;
+let medals=+localStorage.getItem('pach_medals')||300;
+let balls=0,winBalls=0,jackpots=0;
+let ballObjs=[],pins=[],pockets=[];
+let autoMode=false,autoTimer=null;
+
+function save(){localStorage.setItem('pach_medals',medals)}
+function updUI(){
+  document.getElementById('medals').textContent=medals;
+  document.getElementById('balls').textContent=balls;
+  document.getElementById('win-balls').textContent=winBalls;
+  document.getElementById('jackpots').textContent=jackpots;
+}
+function notify(msg,ok=true){
+  const el=document.getElementById('notif');el.textContent=msg;
+  el.className=ok?'show':'show bad';clearTimeout(el._t);el._t=setTimeout(()=>el.className='',2200);
+}
+
+// Build layout
+function buildLayout(){
+  pins=[];
+  for(let row=0;row<11;row++){
+    const even=row%2===0;
+    const cols=even?8:7;
+    const ox=even?26:48;
+    for(let c=0;c<cols;c++){
+      pins.push({x:ox+c*44,y:90+row*36,r:5});
+    }
+  }
+  // Pockets at bottom
+  pockets=[];
+  const pocketW=44;
+  const labels=['×2','×2','×3','🎯×15','×3','×2','×2'];
+  for(let i=0;i<7;i++){
+    pockets.push({
+      x:18+i*pocketW,y:H-44,w:pocketW,h:44,
+      jackpot:i===3,val:i===3?15:i===1||i===5?3:2,
+      label:labels[i],
+    });
+  }
+}
+buildLayout();
+
+// Audio
+const AC=window.AudioContext||window.webkitAudioContext;
+let ac;
+function ga(){if(!ac)try{ac=new AC()}catch(e){}return ac}
+function tone(f,d,t='sine',v=.2){
+  const a=ga();if(!a)return;
+  const o=a.createOscillator(),g=a.createGain();
+  o.connect(g);g.connect(a.destination);
+  o.type=t;o.frequency.value=f;
+  g.gain.setValueAtTime(v,a.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);
+  o.start();o.stop(a.currentTime+d);
+}
+function sndPin(){tone(300+Math.random()*200,.04,'square',.1)}
+function sndPocket(){tone(880,.1,'sine',.25);setTimeout(()=>tone(1100,.12,'sine',.25),80)}
+function sndJackpot(){const s=[784,880,1047,1318,1568,1318,1047,880,784];s.forEach((f,i)=>setTimeout(()=>tone(f,.15,'sine',.32),i*130))}
+function sndShoot(){tone(600,.05,'square',.15)}
+
+document.getElementById('power').addEventListener('input',function(){
+  document.getElementById('power-val').textContent=this.value;
+});
+
+document.getElementById('buy-btn').addEventListener('click',()=>{
+  ga();
+  const v=+document.getElementById('buy-input').value||0;
+  if(v<=0)return notify('メダル数を入力してください',false);
+  if(medals<v)return notify('メダルが足りません',false);
+  medals-=v;balls+=v*4;save();updUI();notify(`${v*4}玉を購入！`,true);
+});
+document.getElementById('cash-btn').addEventListener('click',()=>{
+  if(winBalls<=0)return notify('獲得玉がありません',false);
+  const earn=Math.floor(winBalls/4);
+  if(earn>0){medals+=earn;save();notify(`+${earn}メダル精算！`,true)}
+  winBalls=0;updUI();
+});
+
+function shoot(){
+  if(balls<=0){notify('玉がありません',false);return}
+  balls--;updUI();
+  const power=+document.getElementById('power').value;
+  const x=28+Math.random()*324;
+  ballObjs.push({
+    x,y:8,
+    vx:(Math.random()-.5)*power*0.6,
+    vy:1+power*0.3,
+    r:7,
+    hue:Math.random()*360,
+    trail:[],
+  });
+  sndShoot();
+}
+document.getElementById('shoot-btn').addEventListener('click',()=>{ga();shoot()});
+document.getElementById('auto-btn').addEventListener('click',()=>{
+  ga();
+  autoMode=!autoMode;
+  const btn=document.getElementById('auto-btn');
+  btn.textContent=autoMode?'AUTO ON':'AUTO';
+  btn.className=autoMode?'auto-btn on':'auto-btn';
+  if(autoMode){autoTimer=setInterval(()=>{if(balls>0)shoot()},500)}
+  else clearInterval(autoTimer);
+});
+
+function loop(){
+  requestAnimationFrame(loop);
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  ctx.fillStyle='#050510';ctx.fillRect(0,0,W,H);
+
+  // Decorative lanes
+  for(let i=1;i<7;i++){
+    ctx.strokeStyle=`rgba(255,255,255,.03)`;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(18+i*44,80);ctx.lineTo(18+i*44,H-44);ctx.stroke();
+  }
+
+  // Rails (walls)
+  ctx.fillStyle='#1a1a2a';
+  ctx.fillRect(0,0,16,H);ctx.fillRect(W-16,0,16,H);
+  ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1;
+  ctx.strokeRect(0,0,W,H);
+
+  // Shooter lane
+  ctx.fillStyle='rgba(255,102,204,.04)';
+  ctx.fillRect(W-50,0,34,H-44);
+
+  // Pins
+  pins.forEach(p=>{
+    const grad=ctx.createRadialGradient(p.x-1,p.y-1,0,p.x,p.y,p.r);
+    grad.addColorStop(0,'#e0e0f0');grad.addColorStop(1,'#8888aa');
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=grad;ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=0.5;ctx.stroke();
+  });
+
+  // Pockets
+  pockets.forEach(p=>{
+    const col=p.jackpot?'#ff6600':p.val===3?'#44ff88':'#0088cc';
+    ctx.fillStyle=col+'33';ctx.fillRect(p.x,p.y,p.w,p.h);
+    ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.strokeRect(p.x,p.y,p.w,p.h);
+    ctx.fillStyle=p.jackpot?'#ffaa00':'#ffffff';
+    ctx.font=`bold ${p.jackpot?11:10}px 'M PLUS Rounded 1c',sans-serif`;
+    ctx.textAlign='center';
+    ctx.fillText(p.label,p.x+p.w/2,p.y+p.h/2+4);
+  });
+
+  // Balls
+  for(let bi=ballObjs.length-1;bi>=0;bi--){
+    const b=ballObjs[bi];
+    b.trail.push({x:b.x,y:b.y});
+    if(b.trail.length>6)b.trail.shift();
+
+    // Physics
+    b.vy+=0.35;
+    b.x+=b.vx;b.y+=b.vy;
+
+    // Wall bounce
+    if(b.x<16+b.r){b.x=16+b.r;b.vx=Math.abs(b.vx)*.7}
+    if(b.x>W-16-b.r){b.x=W-16-b.r;b.vx=-Math.abs(b.vx)*.7}
+
+    // Pin collisions
+    let hit=false;
+    for(const p of pins){
+      const dx=b.x-p.x,dy=b.y-p.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<b.r+p.r+0.5){
+        const nx=dx/dist,ny=dy/dist;
+        const dot=b.vx*nx+b.vy*ny;
+        b.vx=b.vx-2*dot*nx*0.7+(Math.random()-.5)*0.8;
+        b.vy=b.vy-2*dot*ny*0.65;
+        b.x=p.x+nx*(b.r+p.r+1);b.y=p.y+ny*(b.r+p.r+1);
+        if(!hit){sndPin();hit=true}
+      }
+    }
+
+    // Pocket detection
+    if(b.y>H-50){
+      const pk=pockets.find(p=>b.x>p.x+2&&b.x<p.x+p.w-2);
+      if(pk){
+        winBalls+=pk.val;
+        if(pk.jackpot){
+          jackpots++;winBalls+=pk.val*3;
+          sndJackpot();
+          showJackpot();
+        }else sndPocket();
+        updUI();
+        ballObjs.splice(bi,1);continue;
+      }
+    }
+    if(b.y>H+30){ballObjs.splice(bi,1);continue}
+
+    // Draw trail
+    b.trail.forEach((t,ti)=>{
+      ctx.beginPath();ctx.arc(t.x,t.y,b.r*(ti/b.trail.length)*0.6,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${b.hue},80%,60%,${ti/b.trail.length*0.25})`;ctx.fill();
+    });
+    // Draw ball
+    const grad=ctx.createRadialGradient(b.x-2,b.y-2,0,b.x,b.y,b.r);
+    grad.addColorStop(0,`hsl(${b.hue},90%,80%)`);
+    grad.addColorStop(1,`hsl(${b.hue},70%,40%)`);
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    ctx.fillStyle=grad;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=0.8;ctx.stroke();
+  }
+}
+
+function showJackpot(){
+  const el=document.getElementById('jackpot-msg');
+  el.textContent='🎉 大当たり！！ +60玉！';
+  el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');
+  setTimeout(()=>{el.textContent='';el.classList.remove('flash')},3000);
+}
+
+updUI();loop();
+</script>
+</body>
+</html>

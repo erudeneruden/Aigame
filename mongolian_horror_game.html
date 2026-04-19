@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>暗闇の草原 - モンゴル恐怖譚</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap');
+
+  :root {
+    --dark: #0a0a0f;
+    --grass: #1a2a0a;
+    --grass2: #0f1a05;
+    --gold: #c8a84b;
+    --blood: #8b1a1a;
+    --fog: rgba(180,200,160,0.08);
+    --text: #d4c9a8;
+    --dim: #7a6f58;
+    --ger-color: #5c4a2a;
+    --sky-top: #050510;
+    --sky-bot: #0a0f05;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--dark);
+    font-family: 'Noto Serif JP', serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    cursor: none;
+  }
+
+  /* ===== TITLE SCREEN ===== */
+  #title-screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 80%, #0a1a05 0%, #000005 70%);
+    z-index: 100;
+  }
+
+  .stars {
+    position: absolute; inset: 0; overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur) ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100%{opacity:var(--min-op)} 50%{opacity:1}
+  }
+
+  .title-moon {
+    width: 80px; height: 80px;
+    background: radial-gradient(circle at 35% 35%, #fffde0, #e8d870 40%, #b8a030);
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(220,200,80,0.4), 0 0 80px rgba(220,200,80,0.15);
+    margin-bottom: 30px;
+    animation: moonGlow 4s ease-in-out infinite;
+  }
+  @keyframes moonGlow {
+    0%,100%{box-shadow:0 0 40px rgba(220,200,80,0.4),0 0 80px rgba(220,200,80,0.15)}
+    50%{box-shadow:0 0 60px rgba(220,200,80,0.6),0 0 120px rgba(220,200,80,0.25)}
+  }
+
+  .title-main {
+    font-size: clamp(28px,5vw,52px);
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    text-shadow: 0 0 20px rgba(200,168,75,0.8), 0 0 40px rgba(200,168,75,0.3);
+    animation: titlePulse 3s ease-in-out infinite;
+    margin-bottom: 8px;
+  }
+  @keyframes titlePulse {
+    0%,100%{text-shadow:0 0 20px rgba(200,168,75,0.8),0 0 40px rgba(200,168,75,0.3)}
+    50%{text-shadow:0 0 30px rgba(200,168,75,1),0 0 60px rgba(200,168,75,0.5),0 0 100px rgba(200,168,75,0.2)}
+  }
+
+  .title-sub {
+    font-size: clamp(12px,2vw,16px);
+    color: var(--dim);
+    letter-spacing: 0.5em;
+    margin-bottom: 60px;
+  }
+
+  .title-btn {
+    background: none;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Noto Serif JP', serif;
+    font-size: 18px;
+    padding: 14px 48px;
+    cursor: pointer;
+    letter-spacing: 0.3em;
+    transition: all 0.3s;
+    animation: btnBlink 2s ease-in-out infinite;
+  }
+  @keyframes btnBlink {
+    0%,100%{opacity:1} 50%{opacity:0.4}
+  }
+  .title-btn:hover {
+    background: rgba(200,168,75,0.15);
+    box-shadow: 0 0 20px rgba(200,168,75,0.3);
+    animation: none;
+  }
+
+  .title-silhouette {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 200px;
+  }
+
+  .copyright-title {
+    position: absolute; bottom: 30px;
+    font-size: 10px; color: #333;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  /* ===== GAME CANVAS AREA ===== */
+  #game-area {
+    display: none;
+    position: absolute; inset: 0;
+    overflow: hidden;
+  }
+
+  #game-canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  /* ===== DIALOG BOX ===== */
+  #dialog-box {
+    display: none;
+    position: absolute;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    width: min(700px, 95vw);
+    background: rgba(5,8,3,0.95);
+    border: 1px solid var(--gold);
+    border-radius: 2px;
+    padding: 20px 28px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.5);
+    z-index: 50;
+  }
+  #dialog-name {
+    font-size: 13px;
+    color: var(--gold);
+    margin-bottom: 10px;
+    letter-spacing: 0.2em;
+  }
+  #dialog-text {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.9;
+    min-height: 50px;
+  }
+  #dialog-continue {
+    text-align: right;
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 12px;
+    animation: btnBlink 1s ease-in-out infinite;
+  }
+
+  /* ===== HORROR FLASH ===== */
+  #horror-flash {
+    display: none;
+    position: absolute; inset: 0;
+    background: white;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  /* ===== GAME OVER ===== */
+  #gameover-screen {
+    display: none;
+    position: absolute; inset: 0;
+    background: black;
+    z-index: 150;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  #gameover-screen.active { display: flex; }
+  .gameover-text {
+    font-size: 48px;
+    color: var(--blood);
+    letter-spacing: 0.4em;
+    text-shadow: 0 0 30px rgba(139,26,26,0.8);
+    animation: titlePulse 2s ease-in-out infinite;
+    margin-bottom: 20px;
+  }
+  .gameover-sub {
+    font-size: 14px; color: var(--dim); letter-spacing: 0.3em;
+    margin-bottom: 40px;
+  }
+  .retry-btn {
+    background: none; border: 1px solid var(--blood);
+    color: var(--blood); font-family: 'Noto Serif JP', serif;
+    font-size: 16px; padding: 12px 36px; cursor: pointer;
+    letter-spacing: 0.3em; transition: all 0.3s;
+  }
+  .retry-btn:hover { background: rgba(139,26,26,0.2); }
+
+  /* ===== ENDING ===== */
+  #ending-screen {
+    display: none;
+    position: absolute; inset: 0;
+    background: black;
+    z-index: 150;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    padding: 40px;
+  }
+  #ending-screen.active { display: flex; }
+  #ending-text {
+    font-size: 16px; color: var(--text); line-height: 2.2;
+    max-width: 600px; text-align: center; letter-spacing: 0.1em;
+  }
+
+  /* ===== CUSTOM CURSOR ===== */
+  #cursor {
+    position: fixed;
+    width: 12px; height: 12px;
+    border: 1px solid rgba(200,168,75,0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: width 0.2s, height 0.2s, opacity 0.2s;
+  }
+
+  /* ===== HUD ===== */
+  #hud {
+    display: none;
+    position: absolute;
+    top: 16px; left: 16px;
+    z-index: 40;
+  }
+  .hud-item {
+    font-size: 12px; color: var(--dim);
+    letter-spacing: 0.15em; margin-bottom: 4px;
+  }
+  .hud-bar {
+    width: 120px; height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px; overflow: hidden;
+  }
+  .hud-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #4a8a2a, #8fca4a);
+    transition: width 0.5s;
+  }
+  .hud-fill.danger { background: linear-gradient(90deg, #8b1a1a, #cc3333); }
+
+  #controls-hint {
+    display: none;
+    position: absolute; bottom: 20px; right: 20px;
+    font-size: 11px; color: rgba(100,90,70,0.6);
+    text-align: right; line-height: 1.8; z-index: 40;
+  }
+
+  #scene-text {
+    display: none;
+    position: absolute; top: 20px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px; color: rgba(200,168,75,0.5);
+    letter-spacing: 0.3em; z-index: 40;
+    text-shadow: 0 0 10px rgba(200,168,75,0.3);
+  }
+
+  .creator-tag {
+    position: fixed; bottom: 8px; right: 12px;
+    font-size: 9px; color: rgba(80,70,50,0.4);
+    letter-spacing: 0.2em; z-index: 9998;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="title-screen">
+  <div class="stars" id="stars-container"></div>
+  <div class="title-moon"></div>
+  <div class="title-main">暗闇の草原</div>
+  <div class="title-sub">～ モンゴル恐怖譚 ～</div>
+  <button class="title-btn" onclick="startGame()">ゲームを始める</button>
+
+  <svg class="title-silhouette" viewBox="0 0 1200 200" preserveAspectRatio="none">
+    <!-- grass hills -->
+    <path d="M0,200 Q100,140 200,160 Q350,120 500,150 Q650,110 800,145 Q950,120 1100,155 Q1150,145 1200,140 L1200,200 Z" fill="#030a02"/>
+    <path d="M0,200 Q80,170 160,175 Q280,155 400,170 Q520,148 640,165 Q760,145 900,168 Q1050,148 1200,160 L1200,200 Z" fill="#050f03"/>
+    <!-- ger silhouette -->
+    <ellipse cx="200" cy="168" rx="50" ry="10" fill="#020802"/>
+    <path d="M155,168 Q200,128 245,168 Z" fill="#020802"/>
+    <rect x="190" y="155" width="20" height="13" fill="#020802"/>
+    <!-- tall figure far away -->
+    <rect x="700" y="128" width="4" height="32" fill="#020802" opacity="0.6"/>
+    <ellipse cx="702" cy="126" rx="6" ry="8" fill="#020802" opacity="0.6"/>
+    <!-- another ger -->
+    <ellipse cx="980" cy="155" rx="40" ry="8" fill="#020802"/>
+    <path d="M942,155 Q980,120 1018,155 Z" fill="#020802"/>
+    <rect x="972" y="143" width="16" height="12" fill="#020802"/>
+  </svg>
+
+  <div class="copyright-title">
+    ※ このゲームはAIによって生成されたものです。商用利用を目的としておりません。<br>
+    © EruDen — Non-commercial / AI-generated work
+  </div>
+</div>
+
+<!-- ===== GAME AREA ===== -->
+<div id="game-area">
+  <canvas id="game-canvas"></canvas>
+  <div id="hud">
+    <div class="hud-item">精神力</div>
+    <div class="hud-bar"><div class="hud-fill" id="sanity-bar" style="width:100%"></div></div>
+  </div>
+  <div id="scene-text">深夜の草原</div>
+  <div id="controls-hint">
+    矢印キー / WASD：移動<br>
+    スペース / Enter：調べる・話す
+  </div>
+</div>
+
+<!-- ===== DIALOG BOX ===== -->
+<div id="dialog-box">
+  <div id="dialog-name"></div>
+  <div id="dialog-text"></div>
+  <div id="dialog-continue">▼ スペースキーで続ける</div>
+</div>
+
+<!-- ===== HORROR FLASH ===== -->
+<div id="horror-flash"></div>
+
+<!-- ===== GAME OVER ===== -->
+<div id="gameover-screen">
+  <div class="gameover-text">死</div>
+  <div class="gameover-sub">草原の闇に飲み込まれた</div>
+  <button class="retry-btn" onclick="retryGame()">もう一度挑む</button>
+</div>
+
+<!-- ===== ENDING ===== -->
+<div id="ending-screen">
+  <div id="ending-text"></div>
+</div>
+
+<div class="creator-tag">EruDen</div>
+
+<script>
+// ===================================================
+// AUDIO ENGINE
+// ===================================================
+const AC = new AudioContext();
+
+function playTone(freq, dur, vol=0.3, type='sine', decay=true) {
+  const o = AC.createOscillator();
+  const g = AC.createGain();
+  o.connect(g); g.connect(AC.destination);
+  o.type = type;
+  o.frequency.setValueAtTime(freq, AC.currentTime);
+  g.gain.setValueAtTime(vol, AC.currentTime);
+  if(decay) g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+  o.start(); o.stop(AC.currentTime + dur);
+}
+
+function playNoise(dur, vol=0.1) {
+  const buf = AC.createBuffer(1, AC.sampleRate * dur, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  const src = AC.createBufferSource();
+  const g = AC.createGain();
+  const filt = AC.createBiquadFilter();
+  filt.type = 'lowpass'; filt.frequency.value = 200;
+  src.buffer = buf;
+  src.connect(filt); filt.connect(g); g.connect(AC.destination);
+  g.gain.setValueAtTime(vol, AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+  src.start(); src.stop(AC.currentTime + dur);
+}
+
+function playStep() {
+  playNoise(0.12, 0.06);
+  playTone(80 + Math.random()*20, 0.1, 0.04, 'triangle', true);
+}
+
+function playScream() {
+  [300,500,400,600,350].forEach((f,i) => {
+    setTimeout(()=>playTone(f, 0.3, 0.4, 'sawtooth'), i*80);
+  });
+  playNoise(1.5, 0.3);
+}
+
+function playAmbient() {
+  // wind-like drone
+  const o1 = AC.createOscillator();
+  const o2 = AC.createOscillator();
+  const g = AC.createGain();
+  const lfo = AC.createOscillator();
+  const lfoG = AC.createGain();
+  o1.type = 'sine'; o1.frequency.value = 55;
+  o2.type = 'sine'; o2.frequency.value = 58;
+  lfo.frequency.value = 0.15;
+  lfoG.gain.value = 0.05;
+  lfo.connect(lfoG); lfoG.connect(g.gain);
+  o1.connect(g); o2.connect(g); g.connect(AC.destination);
+  g.gain.setValueAtTime(0.08, AC.currentTime);
+  o1.start(); o2.start(); lfo.start();
+  return {stop: ()=>{ try{o1.stop();o2.stop();lfo.stop();}catch(e){} }};
+}
+
+function playHorrorStab() {
+  [200,150,100,80].forEach((f,i)=>{
+    setTimeout(()=>playTone(f, 0.5, 0.5, 'sawtooth'), i*60);
+  });
+  playNoise(0.8, 0.5);
+}
+
+function playFootstepChase() {
+  for(let i=0;i<6;i++) {
+    setTimeout(()=>{
+      playNoise(0.1, 0.15);
+      playTone(60+Math.random()*30, 0.1, 0.08, 'triangle');
+    }, i*150);
+  }
+}
+
+function playCreakSound() {
+  const o = AC.createOscillator();
+  const g = AC.createGain();
+  o.connect(g); g.connect(AC.destination);
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(180, AC.currentTime);
+  o.frequency.linearRampToValueAtTime(120, AC.currentTime + 0.8);
+  g.gain.setValueAtTime(0.15, AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + 0.8);
+  o.start(); o.stop(AC.currentTime + 0.8);
+}
+
+function playPickupSound() {
+  [440,550,660].forEach((f,i)=>{
+    setTimeout(()=>playTone(f,0.2,0.15,'triangle'),i*80);
+  });
+}
+
+// ===================================================
+// STAR GENERATION
+// ===================================================
+function generateStars() {
+  const c = document.getElementById('stars-container');
+  for(let i=0;i<200;i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random()*2+0.5;
+    s.style.cssText = `
+      width:${sz}px; height:${sz}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*70}%;
+      --dur:${2+Math.random()*4}s;
+      --min-op:${0.1+Math.random()*0.4};
+      opacity:${Math.random()};
+    `;
+    c.appendChild(s);
+  }
+}
+
+// ===================================================
+// GAME ENGINE
+// ===================================================
+const TILE = 32;
+const COLS = 25, ROWS = 20;
+
+// Map tiles: 0=grass, 1=tall grass, 2=ger(wall), 3=ger door, 4=tree/bush,
+// 5=path, 6=water/lake, 7=rock, 8=bone, 9=sacred stone(ovoo), 10=fire
+
+const MAP = [
+  [0,0,0,1,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0],
+  [0,1,0,0,0,4,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,4,0,0,0],
+  [0,0,0,0,0,0,0,1,0,0,2,2,2,0,0,0,0,0,1,0,0,0,0,0,0],
+  [1,0,0,4,0,0,0,0,0,0,2,3,2,0,0,4,0,0,0,0,0,0,1,0,0],
+  [0,0,0,0,0,0,1,0,0,0,2,2,2,0,0,0,0,0,0,0,1,0,0,0,4],
+  [0,0,1,0,5,5,5,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0],
+  [0,4,0,0,5,0,0,0,0,0,0,0,0,0,5,0,0,1,0,0,0,0,0,1,0],
+  [0,0,0,0,5,0,9,0,0,0,0,0,0,0,5,0,0,0,0,0,2,2,2,0,0],
+  [1,0,0,0,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,2,3,2,0,0],
+  [0,0,0,0,5,0,0,0,0,0,0,8,0,0,5,0,0,0,0,0,2,2,2,0,0],
+  [0,0,1,0,5,0,0,0,0,7,0,0,0,0,5,0,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,5,0,0,0,7,7,7,0,0,0,5,0,0,0,0,0,0,0,1,0,0],
+  [4,0,0,0,5,0,0,0,0,7,0,0,0,0,5,0,0,0,4,0,0,0,0,0,0],
+  [0,0,1,0,5,5,5,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,1,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0],
+  [0,1,0,0,0,6,6,6,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,6,6,6,0,0,0,4,0,0,0,0,0,0,0,0,0,1,0,0,0],
+  [0,0,4,0,0,6,6,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0],
+  [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+];
+
+// NPC definitions
+const NPCS_DATA = [
+  {
+    id: 'elder', name: '老人バヤル', x: 11, y: 4,
+    color: '#8a7a5a',
+    dialogs: [
+      ['バヤル老人', 'おお…若者よ。こんな深夜に草原をさまよっているとは。'],
+      ['バヤル老人', 'この草原では、満月の夜に「デルヒイ」が現れると言い伝えがある。古くから伝わる魂の怨霊だ。'],
+      ['バヤル老人', '我々モンゴルの民は「ゲル」の中に宿る神聖な柱に祈りを捧げ、身を守ってきた。'],
+      ['バヤル老人', '…だが今夜は違う。何かが目覚めた。早くオヴォーを探せ。聖なる石積みが、お前を守ってくれるはずだ。'],
+    ]
+  },
+  {
+    id: 'woman', name: '女性スレン', x: 21, y: 8,
+    color: '#7a6a8a',
+    dialogs: [
+      ['スレン', 'っ……！ 誰！？'],
+      ['スレン', 'ごめんなさい、驚かせて。最近、夜中に不思議な音が聞こえるから…'],
+      ['スレン', '馬の鳴き声……でも馬はもういないの。昨夜、一頭残らず消えてしまったわ。'],
+      ['スレン', 'お願い、湖には近づかないで。弟が三日前に湖の方へ行ったきり、戻ってこない。水面に奇妙な影が見えたって言ってたの…'],
+    ]
+  },
+  {
+    id: 'child', name: '少年テムール', x: 8, y: 16,
+    color: '#6a8a6a',
+    dialogs: [
+      ['テムール', 'ねえ、聞こえる？'],
+      ['テムール', 'ほら……あそこ。岩の向こうに何かいるよ。'],
+      ['テムール', 'ぼく、昨日岩場の近くで骨を見つけたんだ。人間の骨かな…でも大きすぎるんだよね。'],
+      ['テムール', 'お父さんが「オヴォーに触れるな」って言ってた。でも今夜は…お父さんが帰ってこないんだ。'],
+    ]
+  },
+  {
+    id: 'shaman', name: '？？？', x: 6, y: 7,
+    color: '#aa3333',
+    dialogs: [
+      ['？？？', '…………'],
+      ['？？？', 'オラン・デルヒイ。赤き怨霊。草原の記憶。'],
+      ['？？？', 'お前が来るのを待っていた。この地に刻まれた呪いを解けるのはお前だけだ。'],
+      ['？？？', 'オヴォーの前で唱えよ：「テンゲル・エジン・ハニウス」——天と地の霊よ、鎮まれ。'],
+    ]
+  },
+];
+
+// Monster
+const MONSTER = {
+  x: 24, y: 0,
+  active: false,
+  chasing: false,
+  speed: 0.015,
+  timer: 0,
+  visible: false,
+};
+
+// Game state
+let GS = {
+  px: 12, py: 10,
+  pxp: 12, pyp: 10,
+  sanity: 100,
+  keys: {},
+  dialog: null,
+  dialogIndex: 0,
+  dialogOpen: false,
+  talkTarget: null,
+  scene: '深夜の草原',
+  step: 0,
+  moveTimer: 0,
+  npcDialogState: {},
+  collectedItems: [],
+  monsterSpawned: false,
+  gameOver: false,
+  ending: false,
+  ambientStop: null,
+  flashTimeout: null,
+  ovooActivated: false,
+  storyPhase: 0,  // 0=intro, 1=explore, 2=monster, 3=climax
+};
+
+let canvas, ctx;
+
+// ===================================================
+// START / INIT
+// ===================================================
+function startGame() {
+  if(AC.state === 'suspended') AC.resume();
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-area').style.display = 'block';
+  document.getElementById('hud').style.display = 'block';
+  document.getElementById('controls-hint').style.display = 'block';
+  document.getElementById('scene-text').style.display = 'block';
+
+  canvas = document.getElementById('game-canvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('keydown', onKey);
+  window.addEventListener('keyup', e => { GS.keys[e.code] = false; });
+
+  GS.ambientStop = playAmbient();
+
+  // show intro dialog
+  setTimeout(()=>{
+    showDialog('ナレーション', [
+      'モンゴルの広大な草原。満月が血のように赤く染まる夜。',
+      'あなたは馬を失い、見知らぬゲル（天幕）の近くで目を覚ました。',
+      '遠くから、馬頭琴の音色が風に乗って聞こえてくる……いや、これは悲鳴か。',
+      'あなたの名はサラン。この草原で何が起きているのか、探らなければならない。',
+    ]);
+  }, 500);
+
+  requestAnimationFrame(gameLoop);
+}
+
+function resizeCanvas() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  canvas.width = w;
+  canvas.height = h;
+}
+
+// ===================================================
+// INPUT
+// ===================================================
+function onKey(e) {
+  GS.keys[e.code] = true;
+
+  if((e.code === 'Space' || e.code === 'Enter') && GS.dialogOpen) {
+    advanceDialog();
+    return;
+  }
+  if(e.code === 'Space' || e.code === 'Enter') {
+    tryInteract();
+  }
+}
+
+// ===================================================
+// DIALOG SYSTEM
+// ===================================================
+function showDialog(name, lines) {
+  GS.dialogOpen = true;
+  GS.dialogLines = Array.isArray(lines[0]) ? lines : lines.map(l=>[name,l]);
+  GS.dialogLineIdx = 0;
+  displayDialogLine();
+  document.getElementById('dialog-box').style.display = 'block';
+}
+
+function displayDialogLine() {
+  const [name, text] = GS.dialogLines[GS.dialogLineIdx];
+  document.getElementById('dialog-name').textContent = '【 ' + name + ' 】';
+  const el = document.getElementById('dialog-text');
+  el.textContent = '';
+  let i = 0;
+  clearInterval(GS.textTimer);
+  GS.textTimer = setInterval(()=>{
+    el.textContent += text[i];
+    i++;
+    if(i >= text.length) clearInterval(GS.textTimer);
+    // tiny typewriter sound
+    if(i % 3 === 0) playTone(600+Math.random()*200, 0.03, 0.02, 'square');
+  }, 40);
+}
+
+function advanceDialog() {
+  clearInterval(GS.textTimer);
+  GS.dialogLineIdx++;
+  if(GS.dialogLineIdx >= GS.dialogLines.length) {
+    closeDialog();
+  } else {
+    displayDialogLine();
+  }
+}
+
+function closeDialog() {
+  document.getElementById('dialog-box').style.display = 'none';
+  GS.dialogOpen = false;
+  GS.dialogLines = null;
+  GS.talkTarget = null;
+  clearInterval(GS.textTimer);
+}
+
+function tryInteract() {
+  if(GS.dialogOpen || GS.gameOver || GS.ending) return;
+
+  // check NPCs
+  for(const npc of NPCS_DATA) {
+    const dist = Math.abs(npc.x - GS.px) + Math.abs(npc.y - GS.py);
+    if(dist <= 1.5) {
+      const key = npc.id;
+      if(!GS.npcDialogState[key]) GS.npcDialogState[key] = 0;
+      const idx = GS.npcDialogState[key];
+      const dialogs = npc.dialogs;
+      // show current set of dialogs
+      const lines = dialogs.slice(0, idx+1).map(d => d);
+      showDialog(npc.name, lines);
+      GS.npcDialogState[key] = Math.min(idx+1, dialogs.length-1);
+
+      // trigger horror events based on story
+      if(npc.id === 'shaman' && idx >= 2) {
+        setTimeout(()=>horrorFlash(), 1000);
+      }
+      return;
+    }
+  }
+
+  // check OVOO
+  if(Math.abs(6 - GS.px) + Math.abs(7 - GS.py) <= 1.5) {
+    if(!GS.ovooActivated) {
+      GS.ovooActivated = true;
+      playPickupSound();
+      if(GS.storyPhase >= 2) {
+        // ending triggered
+        triggerEnding();
+      } else {
+        showDialog('オヴォー（聖なる石積み）', [
+          'ナレーション', 'おびただしい数の石が積み重なっている。色とりどりのハダク（布）が風にはためいている。',
+          'ナレーション', 'この地に宿る精霊への供物か……あなたは手を合わせて祈った。',
+          'ナレーション', '「テンゲル・エジン・ハニウス」——古い言葉が自然と口をついて出た。',
+          'ナレーション', '直後、遠くで地面が揺れるような音がした。',
+        ]);
+        GS.storyPhase = Math.max(GS.storyPhase, 1);
+        setTimeout(()=>spawnMonster(), 8000);
+      }
+    } else {
+      showDialog('オヴォー（聖なる石積み）', [
+        'ナレーション', '石積みは静かにたたずんでいる。精霊の気配が漂う。',
+      ]);
+    }
+    return;
+  }
+
+  // check lake
+  const tx = Math.round(GS.px), ty = Math.round(GS.py);
+  if(MAP[ty] && MAP[ty][tx] === 6) {
+    playCreakSound();
+    showDialog('湖', [
+      'ナレーション', '黒い水面が月明かりを反射している。',
+      'ナレーション', '水の中に……何かが沈んでいる。人の形のような影。',
+      'ナレーション', '突然、水面が波立った！あなたは反射的に後退した。',
+    ]);
+    GS.sanity -= 15;
+    horrorFlash();
+    return;
+  }
+
+  // check bones
+  if(MAP[ty] && MAP[ty][tx] === 8) {
+    playCreakSound();
+    showDialog('骨', [
+      'ナレーション', '巨大な骨が草原に散らばっている。動物の骨だが……大きすぎる。',
+      'ナレーション', '骨の周りに、焦げたような黒い痕がある。',
+    ]);
+    GS.sanity -= 10;
+    return;
+  }
+}
+
+// ===================================================
+// HORROR EVENTS
+// ===================================================
+function horrorFlash() {
+  const flash = document.getElementById('horror-flash');
+  flash.style.display = 'block';
+  flash.style.opacity = '1';
+  playHorrorStab();
+  setTimeout(()=>{
+    flash.style.transition = 'opacity 0.3s';
+    flash.style.opacity = '0';
+    setTimeout(()=>{ flash.style.display='none'; flash.style.transition=''; }, 300);
+  }, 100);
+}
+
+function spawnMonster() {
+  if(GS.gameOver || GS.ending) return;
+  MONSTER.active = true;
+  MONSTER.x = Math.random() > 0.5 ? 0 : COLS-1;
+  MONSTER.y = Math.random() > 0.5 ? 0 : ROWS-1;
+  MONSTER.visible = false;
+  GS.storyPhase = 2;
+  playFootstepChase();
+  showDialog('ナレーション', [
+    'ナレーション', '……ドン、ドン、ドン。地面を踏みしめる重い足音が近づいてくる。',
+    'ナレーション', '草原の向こうから、巨大な黒い影が現れた。',
+    'ナレーション', '「デルヒイ」——バヤル老人の言葉が脳裏をよぎる。',
+    'ナレーション', 'オヴォーに向かえ！シャーマンが言っていた呪文を唱えるのだ！',
+  ]);
+}
+
+function triggerEnding() {
+  GS.ending = true;
+  if(GS.ambientStop) GS.ambientStop.stop();
+  playPickupSound();
+  setTimeout(()=>{
+    [440,550,660,770,880].forEach((f,i)=>setTimeout(()=>playTone(f,1,0.2,'sine'),i*200));
+  }, 500);
+
+  const endScreen = document.getElementById('ending-screen');
+  endScreen.classList.add('active');
+  const text = document.getElementById('ending-text');
+  text.style.opacity = '0';
+
+  const endingLines = [
+    'あなたは声を張り上げた。',
+    '「テンゲル・エジン・ハニウス！」',
+    '',
+    '大地が震え、空が白く染まった。',
+    'デルヒイは断末魔の叫びをあげ、草原の風に溶けていった。',
+    '',
+    'やがて夜明けが訪れた。',
+    '草原に朝露が光り、馬の群れが地平線の彼方から戻ってきた。',
+    '',
+    'スレンの弟は湖のほとりで眠っていた。無傷で。',
+    'バヤル老人は静かに微笑んだ。',
+    '「天と地の霊は、勇気ある者を見捨てない」と。',
+    '',
+    '── 草原に、再び静寂が戻った。 ──',
+    '',
+    '[ END ]',
+  ];
+
+  let lineIdx = 0;
+  function showLine() {
+    if(lineIdx >= endingLines.length) return;
+    text.innerHTML += (lineIdx > 0 ? '<br>' : '') + endingLines[lineIdx];
+    text.style.opacity = '1';
+    lineIdx++;
+    setTimeout(showLine, 600);
+  }
+  setTimeout(showLine, 1000);
+}
+
+function triggerGameOver() {
+  if(GS.gameOver) return;
+  GS.gameOver = true;
+  if(GS.ambientStop) GS.ambientStop.stop();
+  playScream();
+  horrorFlash();
+  setTimeout(()=>{
+    document.getElementById('gameover-screen').classList.add('active');
+  }, 800);
+}
+
+function retryGame() {
+  location.reload();
+}
+
+// ===================================================
+// GAME LOOP
+// ===================================================
+let lastTime = 0;
+function gameLoop(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.1);
+  lastTime = ts;
+
+  if(!GS.gameOver && !GS.ending) {
+    update(dt);
+  }
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+function update(dt) {
+  if(GS.dialogOpen) return;
+
+  // Player movement
+  GS.moveTimer += dt;
+  if(GS.moveTimer >= 0.13) {
+    GS.moveTimer = 0;
+    let nx = GS.px, ny = GS.py;
+    if(GS.keys['ArrowUp'] || GS.keys['KeyW']) ny--;
+    if(GS.keys['ArrowDown'] || GS.keys['KeyS']) ny++;
+    if(GS.keys['ArrowLeft'] || GS.keys['KeyA']) nx--;
+    if(GS.keys['ArrowRight'] || GS.keys['KeyD']) nx++;
+
+    if(nx !== GS.px || ny !== GS.py) {
+      nx = Math.max(0, Math.min(COLS-1, nx));
+      ny = Math.max(0, Math.min(ROWS-1, ny));
+      const tile = MAP[ny] ? MAP[ny][nx] : 0;
+      const blocked = tile === 2; // ger walls
+      if(!blocked) {
+        GS.px = nx; GS.py = ny;
+        playStep();
+        GS.step++;
+        // ambient sanity drain in dark areas
+        if(GS.step % 30 === 0 && GS.storyPhase >= 1) {
+          GS.sanity = Math.max(0, GS.sanity - 2);
+          updateHUD();
+        }
+      }
+    }
+  }
+
+  // Monster AI
+  if(MONSTER.active) {
+    MONSTER.timer += dt;
+    if(MONSTER.timer >= 0.5) {
+      MONSTER.timer = 0;
+      // move toward player
+      const dx = GS.px - MONSTER.x;
+      const dy = GS.py - MONSTER.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      MONSTER.visible = dist < 12;
+
+      if(dist > 0.5) {
+        if(Math.abs(dx) > Math.abs(dy)) {
+          MONSTER.x += Math.sign(dx);
+        } else {
+          MONSTER.y += Math.sign(dy);
+        }
+      }
+
+      if(dist < 1.5) {
+        triggerGameOver();
+        return;
+      }
+
+      if(dist < 5) {
+        GS.sanity = Math.max(0, GS.sanity - 5);
+        updateHUD();
+        if(GS.step % 2 === 0) playNoise(0.1, 0.05);
+      }
+
+      if(GS.sanity <= 0) {
+        triggerGameOver();
+      }
+    }
+  }
+}
+
+function updateHUD() {
+  const bar = document.getElementById('sanity-bar');
+  bar.style.width = GS.sanity + '%';
+  if(GS.sanity < 30) bar.classList.add('danger');
+  else bar.classList.remove('danger');
+}
+
+// ===================================================
+// RENDERER
+// ===================================================
+const TILE_COLORS = {
+  0: () => lerpColor('#1a2a0a', '#0f1a05', Math.random()*0.3),
+  1: '#0a1a05',
+  2: '#3a2a10',
+  3: '#2a1a08',
+  4: '#0a1505',
+  5: '#151a0a',
+  6: '#050a20',
+  7: '#1a1a1a',
+  8: '#2a2a1a',
+  9: '#2a1a0a',
+  10: '#301005',
+};
+
+function lerpColor(a, b, t) { return a; } // simplified
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+
+function render() {
+  if(!ctx) return;
+  const W = canvas.width, H = canvas.height;
+
+  // Camera (center on player)
+  const camX = GS.px * TILE - W/2 + TILE/2;
+  const camY = GS.py * TILE - H/2 + TILE/2;
+
+  ctx.fillStyle = '#030805';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.translate(-camX, -camY);
+
+  // Draw tiles
+  for(let y=0; y<ROWS; y++) {
+    for(let x=0; x<COLS; x++) {
+      const t = MAP[y][x];
+      const wx = x * TILE, wy = y * TILE;
+
+      // base grass
+      const noise = ((x*7+y*13+x*y*3) % 10) / 10;
+      const g = Math.floor(20 + noise * 15);
+      ctx.fillStyle = `rgb(${Math.floor(g*0.7)},${g},${Math.floor(g*0.3)})`;
+      ctx.fillRect(wx, wy, TILE, TILE);
+
+      if(t === 1) { // tall grass
+        ctx.fillStyle = `rgba(0,${Math.floor(20+noise*10)},0,0.5)`;
+        ctx.fillRect(wx, wy, TILE, TILE);
+        // grass blades
+        ctx.strokeStyle = `rgba(20,${40+noise*20},10,0.8)`;
+        ctx.lineWidth = 1;
+        for(let i=0;i<5;i++) {
+          const bx = wx + (i/4)*TILE;
+          ctx.beginPath();
+          ctx.moveTo(bx, wy+TILE);
+          ctx.lineTo(bx-3+noise*6, wy+4);
+          ctx.stroke();
+        }
+      } else if(t === 2) { // ger wall
+        // floor
+        ctx.fillStyle = '#2a1a08';
+        ctx.fillRect(wx, wy, TILE, TILE);
+        // circular ger shape hint
+        ctx.fillStyle = '#3d2a12';
+        ctx.beginPath();
+        ctx.arc(wx+TILE/2, wy+TILE/2, TILE*0.45, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#5a3a18';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      } else if(t === 3) { // ger door
+        ctx.fillStyle = '#1a0a02';
+        ctx.fillRect(wx+TILE*0.3, wy+TILE*0.4, TILE*0.4, TILE*0.6);
+        ctx.strokeStyle = '#6a4a20';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(wx+TILE*0.3, wy+TILE*0.4, TILE*0.4, TILE*0.6);
+      } else if(t === 4) { // bush/shrub
+        ctx.fillStyle = '#050f02';
+        ctx.beginPath();
+        ctx.arc(wx+TILE/2, wy+TILE*0.6, TILE*0.3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#0a1a05';
+        ctx.beginPath();
+        ctx.arc(wx+TILE*0.35, wy+TILE*0.5, TILE*0.22, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(wx+TILE*0.65, wy+TILE*0.5, TILE*0.22, 0, Math.PI*2);
+        ctx.fill();
+      } else if(t === 5) { // path
+        ctx.fillStyle = `rgba(25,22,10,0.8)`;
+        ctx.fillRect(wx, wy, TILE, TILE);
+      } else if(t === 6) { // water/lake
+        const wave = Math.sin(Date.now()/1000 + x*0.5 + y*0.3) * 5;
+        ctx.fillStyle = `rgb(5,10,${30+Math.floor(wave)})`;
+        ctx.fillRect(wx, wy, TILE, TILE);
+        // ripple
+        ctx.strokeStyle = `rgba(20,30,60,0.5)`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.ellipse(wx+TILE/2, wy+TILE/2, TILE*0.4, TILE*0.15, 0, 0, Math.PI*2);
+        ctx.stroke();
+      } else if(t === 7) { // rock
+        ctx.fillStyle = '#1a1a18';
+        ctx.beginPath();
+        ctx.ellipse(wx+TILE/2, wy+TILE*0.6, TILE*0.38, TILE*0.25, 0.3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#252520';
+        ctx.beginPath();
+        ctx.ellipse(wx+TILE*0.45, wy+TILE*0.55, TILE*0.2, TILE*0.15, -0.2, 0, Math.PI*2);
+        ctx.fill();
+      } else if(t === 8) { // bone
+        ctx.fillStyle = '#2a2a1a';
+        ctx.fillRect(wx, wy, TILE, TILE);
+        ctx.fillStyle = '#c8c8a8';
+        ctx.fillRect(wx+TILE*0.2, wy+TILE*0.45, TILE*0.6, TILE*0.1);
+        ctx.beginPath();
+        ctx.arc(wx+TILE*0.2, wy+TILE/2, TILE*0.1, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(wx+TILE*0.8, wy+TILE/2, TILE*0.1, 0, Math.PI*2);
+        ctx.fill();
+      } else if(t === 9) { // ovoo (sacred stone pile)
+        ctx.fillStyle = '#1a1205';
+        ctx.fillRect(wx, wy, TILE, TILE);
+        // stones
+        [[0.5,0.7,0.3],[0.35,0.75,0.2],[0.65,0.75,0.2],[0.5,0.55,0.25],[0.5,0.4,0.18]].forEach(([cx,cy,r])=>{
+          ctx.fillStyle = '#3a3020';
+          ctx.beginPath();
+          ctx.ellipse(wx+cx*TILE, wy+cy*TILE, r*TILE, r*TILE*0.6, 0, 0, Math.PI*2);
+          ctx.fill();
+        });
+        // prayer flags
+        const t2 = Date.now()/800;
+        ctx.strokeStyle = `rgba(180,30,30,0.8)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(wx+TILE*0.5, wy+2);
+        ctx.lineTo(wx+TILE*0.5+Math.sin(t2)*4, wy+TILE*0.35);
+        ctx.stroke();
+        if(GS.ovooActivated) {
+          ctx.fillStyle = `rgba(200,168,75,${0.3+Math.sin(Date.now()/500)*0.2})`;
+          ctx.beginPath();
+          ctx.arc(wx+TILE/2, wy+TILE/2, TILE*0.6, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  // Draw NPCs
+  for(const npc of NPCS_DATA) {
+    const wx = npc.x * TILE, wy = npc.y * TILE;
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(wx+TILE/2, wy+TILE*0.9, TILE*0.3, TILE*0.1, 0, 0, Math.PI*2);
+    ctx.fill();
+    // body
+    ctx.fillStyle = npc.color;
+    ctx.fillRect(wx+TILE*0.3, wy+TILE*0.45, TILE*0.4, TILE*0.5);
+    // head
+    ctx.beginPath();
+    ctx.arc(wx+TILE/2, wy+TILE*0.35, TILE*0.2, 0, Math.PI*2);
+    ctx.fill();
+    // hat (deel/deel-like)
+    ctx.fillStyle = npc.color;
+    ctx.fillRect(wx+TILE*0.25, wy+TILE*0.2, TILE*0.5, TILE*0.12);
+
+    // talk indicator
+    const dist = Math.abs(npc.x - GS.px) + Math.abs(npc.y - GS.py);
+    if(dist <= 1.5) {
+      ctx.fillStyle = `rgba(200,168,75,${0.5+Math.sin(Date.now()/400)*0.4})`;
+      ctx.font = 'bold 14px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('！', wx+TILE/2, wy-4);
+    }
+  }
+
+  // Draw Monster
+  if(MONSTER.active && MONSTER.visible) {
+    const mx = MONSTER.x * TILE, my = MONSTER.y * TILE;
+    const pulse = Math.sin(Date.now()/300) * 4;
+    // eerie glow
+    const grad = ctx.createRadialGradient(mx+TILE/2, my+TILE/2, 0, mx+TILE/2, my+TILE/2, TILE*2);
+    grad.addColorStop(0, 'rgba(100,0,0,0.3)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(mx-TILE, my-TILE, TILE*3, TILE*3);
+
+    // body - tall dark figure
+    ctx.fillStyle = `rgba(10,0,0,${0.8+Math.sin(Date.now()/200)*0.2})`;
+    ctx.fillRect(mx+TILE*0.25, my+TILE*0.15, TILE*0.5, TILE*0.85);
+    // elongated head
+    ctx.beginPath();
+    ctx.ellipse(mx+TILE/2, my+TILE*0.1, TILE*0.28+pulse*0.02, TILE*0.32+pulse*0.02, 0, 0, Math.PI*2);
+    ctx.fill();
+    // glowing eyes
+    ctx.fillStyle = `rgba(255,0,0,${0.7+Math.sin(Date.now()/150)*0.3})`;
+    ctx.beginPath();
+    ctx.arc(mx+TILE*0.4, my+TILE*0.08, 3, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(mx+TILE*0.6, my+TILE*0.08, 3, 0, Math.PI*2);
+    ctx.fill();
+    // arms stretching
+    ctx.strokeStyle = `rgba(10,0,0,0.9)`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(mx+TILE*0.25, my+TILE*0.4);
+    ctx.lineTo(mx-TILE*0.1+Math.sin(Date.now()/400)*6, my+TILE*0.7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(mx+TILE*0.75, my+TILE*0.4);
+    ctx.lineTo(mx+TILE*1.1+Math.sin(Date.now()/400)*6, my+TILE*0.7);
+    ctx.stroke();
+  }
+
+  // Draw Player
+  const px = GS.px * TILE, py = GS.py * TILE;
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.beginPath();
+  ctx.ellipse(px+TILE/2, py+TILE*0.95, TILE*0.25, TILE*0.08, 0, 0, Math.PI*2);
+  ctx.fill();
+  // body (deel robe)
+  ctx.fillStyle = '#5a7a8a';
+  ctx.fillRect(px+TILE*0.28, py+TILE*0.45, TILE*0.44, TILE*0.5);
+  // head
+  ctx.fillStyle = '#c8a870';
+  ctx.beginPath();
+  ctx.arc(px+TILE/2, py+TILE*0.33, TILE*0.2, 0, Math.PI*2);
+  ctx.fill();
+  // hair
+  ctx.fillStyle = '#1a0a00';
+  ctx.fillRect(px+TILE*0.3, py+TILE*0.2, TILE*0.4, TILE*0.1);
+
+  // Fog overlay (moving)
+  const fogTime = Date.now() / 3000;
+  for(let i=0;i<3;i++) {
+    const fx = (Math.sin(fogTime+i*2)*W*0.5 + camX) % (W*1.5);
+    const fy = (Math.cos(fogTime*0.7+i)*H*0.3 + camY);
+    const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, W*0.4);
+    fg.addColorStop(0, 'rgba(150,180,120,0.025)');
+    fg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = fg;
+    ctx.fillRect(camX, camY, W+camX*2, H+camY*2);
+  }
+
+  ctx.restore();
+
+  // Vignette
+  const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.85);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.85)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+
+  // Sanity distortion overlay
+  if(GS.sanity < 50) {
+    const alpha = (50 - GS.sanity) / 50 * 0.15;
+    ctx.fillStyle = `rgba(80,0,0,${alpha + Math.sin(Date.now()/300)*0.03})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Monster proximity effect
+  if(MONSTER.active) {
+    const mx = MONSTER.x * TILE + TILE/2 - camX;
+    const my = MONSTER.y * TILE + TILE/2 - camY;
+    const dx = mx - W/2, dy = my - H/2;
+    const distPx = Math.sqrt(dx*dx+dy*dy);
+    if(distPx < 400) {
+      const alpha = (1 - distPx/400) * 0.12;
+      ctx.fillStyle = `rgba(100,0,0,${alpha})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+}
+
+// ===================================================
+// CURSOR
+// ===================================================
+const cursorEl = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top = e.clientY + 'px';
+});
+
+// ===================================================
+// BOOT
+// ===================================================
+generateStars();
+
+// Periodic ambient horror events
+setInterval(()=>{
+  if(!GS.gameOver && !GS.ending && !GS.dialogOpen && GS.storyPhase >= 1) {
+    if(Math.random() < 0.15) {
+      playCreakSound();
+    }
+    if(Math.random() < 0.05 && MONSTER.active) {
+      horrorFlash();
+    }
+  }
+}, 5000);
+
+// Ambient footstep sounds when monster is near
+setInterval(()=>{
+  if(MONSTER.active && !GS.dialogOpen) {
+    const dx = GS.px - MONSTER.x, dy = GS.py - MONSTER.y;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    if(dist < 8 && Math.random() < 0.5) {
+      playNoise(0.2, 0.08 * (1 - dist/8));
+    }
+  }
+}, 1000);
+</script>
+</body>
+</html>

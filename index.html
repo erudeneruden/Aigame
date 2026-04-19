@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎰 MEDAL ARCADE — ロビー</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#05030e;
+  --bg2:#0a061a;
+  --panel:#0f0a20;
+  --panel2:#140d28;
+  --gold:#f5c842;
+  --gold2:#ffe57a;
+  --purple:#8b5cf6;
+  --violet:#a78bfa;
+  --pink:#f472b6;
+  --cyan:#22d3ee;
+  --green:#4ade80;
+  --red:#f87171;
+  --text:#f0ecff;
+  --dim:#6b5fa0;
+  --border:rgba(139,92,246,.2);
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Noto Sans JP',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ===== ANIMATED BACKGROUND ===== */
+.bg-layer{
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.bg-layer::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 15% 50%,rgba(139,92,246,.12) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 20%,rgba(244,114,182,.08) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 90%,rgba(34,211,238,.06) 0%,transparent 50%);
+}
+.stars{position:absolute;inset:0}
+.star{
+  position:absolute;border-radius:50%;
+  background:white;animation:twinkle var(--dur,3s) ease-in-out infinite;
+  animation-delay:var(--del,0s);
+}
+@keyframes twinkle{0%,100%{opacity:.1;transform:scale(1)}50%{opacity:.8;transform:scale(1.3)}}
+
+/* ===== HEADER ===== */
+header{
+  position:relative;z-index:10;
+  padding:24px 24px 0;
+  text-align:center;
+}
+.logo{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(28px,6vw,56px);
+  font-weight:900;
+  letter-spacing:6px;
+  background:linear-gradient(135deg,var(--gold),var(--pink),var(--violet),var(--cyan));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 20px rgba(245,200,66,.3));
+  animation:logo-shift 8s ease-in-out infinite alternate;
+  line-height:1.1;
+}
+@keyframes logo-shift{
+  0%{filter:drop-shadow(0 0 15px rgba(245,200,66,.3))}
+  50%{filter:drop-shadow(0 0 25px rgba(244,114,182,.4))}
+  100%{filter:drop-shadow(0 0 20px rgba(34,211,238,.35))}
+}
+.logo-sub{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(9px,1.8vw,12px);
+  letter-spacing:6px;color:var(--dim);
+  margin-top:4px;margin-bottom:20px;
+}
+
+/* ===== MEDAL HUD ===== */
+.hud{
+  position:relative;z-index:10;
+  display:flex;justify-content:center;gap:10px;
+  padding:0 16px 20px;flex-wrap:wrap;
+}
+.hud-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 20px;
+  display:flex;align-items:center;gap:12px;
+  min-width:160px;
+  box-shadow:0 4px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.hud-icon{font-size:24px}
+.hud-info{}
+.hud-lbl{font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.hud-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--gold);line-height:1.2}
+.hud-val.cyan{color:var(--cyan)}
+.hud-val.green{color:var(--green)}
+
+/* Medal input area */
+.medal-actions{
+  position:relative;z-index:10;
+  display:flex;justify-content:center;gap:8px;
+  padding:0 16px 24px;flex-wrap:wrap;align-items:center;
+}
+.medal-input{
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  padding:10px 14px;
+  width:130px;
+  font-size:14px;
+  font-family:'Noto Sans JP',sans-serif;
+}
+.medal-input:focus{outline:none;border-color:var(--purple)}
+.m-btn{
+  padding:10px 18px;border-radius:10px;border:1px solid;
+  cursor:pointer;font-size:13px;font-weight:700;
+  font-family:'Noto Sans JP',sans-serif;
+  transition:all .15s;letter-spacing:.5px;
+}
+.m-btn.add{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.35);color:var(--green)}
+.m-btn.add:hover{background:rgba(74,222,128,.2)}
+.m-btn.reset{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.3);color:var(--red)}
+.m-btn.reset:hover{background:rgba(248,113,113,.18)}
+.m-btn.set{background:rgba(139,92,246,.15);border-color:var(--border);color:var(--violet)}
+.m-btn.set:hover{background:rgba(139,92,246,.28)}
+
+/* ===== GAME GRID ===== */
+.section-title{
+  position:relative;z-index:10;
+  font-family:'Orbitron',monospace;
+  font-size:clamp(11px,2vw,13px);
+  letter-spacing:5px;color:var(--dim);
+  text-align:center;
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:12px;justify-content:center;
+}
+.section-title::before,.section-title::after{
+  content:'';flex:1;max-width:80px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border));
+}
+.section-title::after{background:linear-gradient(270deg,transparent,var(--border))}
+
+.game-grid{
+  position:relative;z-index:10;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+  padding:0 16px 28px;
+  max-width:1100px;
+  margin:0 auto;
+}
+
+.game-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:all .25s cubic-bezier(.2,0,.1,1);
+  text-decoration:none;color:inherit;
+  display:block;
+  position:relative;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+.game-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.03),transparent 50%);
+  pointer-events:none;
+}
+.game-card:hover{
+  transform:translateY(-6px) scale(1.01);
+  border-color:var(--card-accent,var(--purple));
+  box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px var(--card-accent,var(--purple)),0 0 30px color-mix(in srgb,var(--card-accent,var(--purple)) 20%,transparent);
+}
+.card-banner{
+  height:90px;display:flex;align-items:center;justify-content:center;
+  font-size:52px;position:relative;overflow:hidden;
+  background:var(--card-bg,linear-gradient(135deg,#1a0830,#0f051e));
+}
+.card-banner::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,transparent 40%,var(--panel));
+}
+.card-body{padding:14px 18px 16px}
+.card-name{
+  font-family:'Orbitron',monospace;
+  font-size:15px;font-weight:700;
+  margin-bottom:5px;color:var(--text);
+  display:flex;align-items:center;gap:8px;
+}
+.card-desc{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:10px}
+.card-tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{
+  font-size:10px;padding:3px 8px;border-radius:20px;
+  border:1px solid;letter-spacing:.5px;
+}
+.tag.hot{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.35);color:var(--red)}
+.tag.new{background:rgba(34,211,238,.1);border-color:rgba(34,211,238,.35);color:var(--cyan)}
+.tag.popular{background:rgba(245,200,66,.1);border-color:rgba(245,200,66,.35);color:var(--gold)}
+.tag.free{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3);color:var(--green)}
+.card-footer{
+  padding:10px 18px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid rgba(255,255,255,.04);
+}
+.card-cost{font-size:12px;color:var(--dim)}
+.card-cost strong{color:var(--gold);font-family:'Orbitron',monospace;font-size:13px}
+.play-btn{
+  background:var(--card-accent,var(--purple));
+  color:#fff;border:none;border-radius:20px;
+  padding:7px 18px;font-size:12px;font-weight:700;
+  letter-spacing:1px;cursor:pointer;pointer-events:none;
+  font-family:'Noto Sans JP',sans-serif;
+  transition:opacity .15s;
+}
+
+/* ===== RANKING ===== */
+.ranking-section{
+  position:relative;z-index:10;
+  max-width:700px;margin:0 auto;
+  padding:0 16px 32px;
+}
+.ranking-box{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.4);
+}
+.ranking-head{
+  padding:16px 20px;
+  background:linear-gradient(90deg,rgba(139,92,246,.12),rgba(244,114,182,.08));
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;font-family:'Orbitron',monospace;font-size:13px;letter-spacing:3px;color:var(--dim);
+}
+.rank-row{
+  display:grid;
+  grid-template-columns:44px 1fr auto auto;
+  align-items:center;padding:12px 20px;gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.03);
+  transition:background .15s;
+}
+.rank-row:last-child{border-bottom:none}
+.rank-row:hover{background:rgba(255,255,255,.02)}
+.rank-row.me{background:rgba(139,92,246,.08);border-left:3px solid var(--purple)}
+.rank-num{
+  font-family:'Orbitron',monospace;font-size:16px;font-weight:700;
+  text-align:center;color:var(--dim);
+}
+.rank-num.gold{color:var(--gold)}
+.rank-num.silver{color:#c0c0c0}
+.rank-num.bronze{color:#cd7f32}
+.rank-avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);
+}
+.rank-name-wrap{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rank-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-name.me-label{color:var(--violet)}
+.rank-sub{font-size:10px;color:var(--dim)}
+.rank-medals{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--gold);white-space:nowrap}
+.rank-change{font-size:11px;width:32px;text-align:right}
+.rank-change.up{color:var(--green)}
+.rank-change.down{color:var(--red)}
+.rank-change.same{color:var(--dim)}
+
+/* Player name edit */
+.name-edit{
+  display:flex;gap:8px;align-items:center;justify-content:center;
+  padding:0 16px 20px;position:relative;z-index:10;flex-wrap:wrap;
+}
+.name-edit input{
+  background:rgba(255,255,255,.05);border:1px solid var(--border);
+  color:var(--text);padding:9px 14px;border-radius:10px;font-size:14px;
+  font-family:'Noto Sans JP',sans-serif;width:200px;
+}
+.name-edit input:focus{outline:none;border-color:var(--purple)}
+.name-edit button{
+  padding:9px 18px;background:rgba(139,92,246,.2);border:1px solid var(--border);
+  border-radius:10px;color:var(--violet);font-size:13px;font-weight:700;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;transition:all .15s;
+}
+.name-edit button:hover{background:rgba(139,92,246,.35)}
+
+/* Notification */
+#notif{
+  position:fixed;top:20px;right:20px;z-index:999;
+  padding:12px 20px;border-radius:12px;font-size:14px;
+  transform:translateX(120%);transition:transform .3s cubic-bezier(.2,0,.1,1);
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  max-width:260px;font-family:'Noto Sans JP',sans-serif;
+}
+#notif.show{transform:translateX(0)}
+#notif.ok{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:var(--green)}
+#notif.bad{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:var(--red)}
+#notif.info{background:rgba(139,92,246,.15);border:1px solid var(--border);color:var(--violet)}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;
+  display:none;align-items:center;justify-content:center;padding:20px;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--panel2);border:1px solid var(--border);
+  border-radius:20px;padding:28px;max-width:400px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+}
+.modal h2{font-family:'Orbitron',monospace;font-size:16px;color:var(--gold);margin-bottom:8px;letter-spacing:2px}
+.modal p{font-size:13px;color:var(--dim);margin-bottom:20px;line-height:1.7}
+.modal-btns{display:flex;gap:10px;justify-content:flex-end}
+.modal-btns button{
+  padding:10px 22px;border-radius:10px;border:1px solid;cursor:pointer;
+  font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;transition:all .15s;
+}
+.btn-cancel{background:transparent;border-color:rgba(255,255,255,.15);color:var(--dim)}
+.btn-cancel:hover{background:rgba(255,255,255,.05)}
+.btn-confirm{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.35);color:var(--red)}
+.btn-confirm:hover{background:rgba(248,113,113,.28)}
+
+/* Footer */
+footer{
+  position:relative;z-index:10;
+  text-align:center;padding:20px;font-size:11px;color:var(--dim);letter-spacing:2px;
+  border-top:1px solid rgba(255,255,255,.04);margin-top:8px;
+}
+
+/* Responsive */
+@media(max-width:480px){
+  .game-grid{grid-template-columns:1fr;padding:0 12px 20px}
+  .hud{gap:8px}
+  .hud-card{min-width:130px;padding:10px 14px}
+}
+</style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-layer">
+  <div class="stars" id="stars"></div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">🎰 MEDAL ARCADE</div>
+  <div class="logo-sub">— GAME LOBBY —</div>
+</header>
+
+<!-- Medal HUD -->
+<div class="hud">
+  <div class="hud-card">
+    <div class="hud-icon">🪙</div>
+    <div class="hud-info">
+      <div class="hud-lbl">所持メダル</div>
+      <div class="hud-val" id="hud-medals">300</div>
+    </div>
+  </div>
+  <div class="hud-card">
+    <div class="hud-icon">🏆</div>
+    <div class="hud-info">
+      <div class="hud-lbl">最高記録</div>
+      <div class="hud-val cyan" id="hud-best">300</div>
+    </div>
+  </div>
+  <div class="hud-card">
+    <div class="hud-icon">🎮</div>
+    <div class="hud-info">
+      <div class="hud-lbl">ゲーム回数</div>
+      <div class="hud-val green" id="hud-plays">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- Medal management -->
+<div class="medal-actions">
+  <input class="medal-input" type="number" id="medal-input" placeholder="メダル数" min="1" max="9999">
+  <button class="m-btn add" id="btn-add">＋ 追加</button>
+  <button class="m-btn set" id="btn-set">セット</button>
+  <button class="m-btn reset" id="btn-reset">リセット</button>
+</div>
+
+<!-- Player name -->
+<div class="name-edit">
+  <input type="text" id="name-input" placeholder="プレイヤー名を入力" maxlength="12">
+  <button id="name-save-btn">名前を保存</button>
+</div>
+
+<!-- Game grid -->
+<div class="section-title">— GAMES —</div>
+<div class="game-grid" id="game-grid"></div>
+
+<!-- Ranking -->
+<div class="section-title" style="position:relative;z-index:10">— RANKING —</div>
+<div class="ranking-section">
+  <div class="ranking-box">
+    <div class="ranking-head">🏆 &nbsp;MEDAL RANKING</div>
+    <div id="ranking-list"></div>
+  </div>
+</div>
+
+<!-- Reset confirm modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>⚠️ リセット確認</h2>
+    <p>メダルを初期値（300枚）に戻します。<br>この操作は取り消せません。</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="modal-cancel">キャンセル</button>
+      <button class="btn-confirm" id="modal-confirm">リセットする</button>
+    </div>
+  </div>
+</div>
+
+<div id="notif"></div>
+
+<footer>© MEDAL ARCADE &nbsp;|&nbsp; All games saved in browser storage</footer>
+
+<script>
+// ============================================================
+// CONFIG — ゲームリスト（URLをGitHub Pages実際のパスに合わせて変更してください）
+// ============================================================
+const BASE = 'https://erudeneruden.github.io/Aigame/';
+const GAMES = [
+  {
+    id:'juggler',file:'juggler.html',
+    name:'ジャグラー',icon:'🎰',
+    desc:'GoGoランプを光らせろ！BIGボーナスを狙ってメダルを増やそう。',
+    tags:['popular','hot'],
+    bg:'linear-gradient(135deg,#1a0025,#2d0040)',
+    accent:'#a855f7',
+    cost:'ゲームメダル換金制',
+  },
+  {
+    id:'tetris',file:'tetris.html',
+    name:'テトリス',icon:'🟦',
+    desc:'ブロックを積んでラインを消せ！スコアに応じてメダル獲得。',
+    tags:['free'],
+    bg:'linear-gradient(135deg,#001a2a,#002a40)',
+    accent:'#22d3ee',
+    cost:'スタート 10メダル',
+  },
+  {
+    id:'poker',file:'poker.html',
+    name:'ビデオポーカー',icon:'♠️',
+    desc:'ロイヤルフラッシュで800倍！最強の手役を揃えろ。',
+    tags:['hot','popular'],
+    bg:'linear-gradient(135deg,#001a0a,#002a10)',
+    accent:'#4ade80',
+    cost:'ベット自由設定',
+  },
+  {
+    id:'pachinko',file:'pachinko.html',
+    name:'パチンコ',icon:'🎯',
+    desc:'物理演算で弾む玉！中央ポケットに入れば大当たり！',
+    tags:['new'],
+    bg:'linear-gradient(135deg,#1a001a,#2a0030)',
+    accent:'#f472b6',
+    cost:'玉 1:4両替',
+  },
+  {
+    id:'slots',file:'slots.html',
+    name:'スロット',icon:'🎲',
+    desc:'777でJACKPOT×50倍！シンプルで熱いスピンゲーム。',
+    tags:['hot'],
+    bg:'linear-gradient(135deg,#0f0515,#1a0a25)',
+    accent:'#8b5cf6',
+    cost:'ベット自由設定',
+  },
+  {
+    id:'blackjack',file:'blackjack.html',
+    name:'ブラックジャック',icon:'🃏',
+    desc:'21を目指してディーラーを倒せ。ダブルダウンで一発逆転！',
+    tags:['new','popular'],
+    bg:'linear-gradient(135deg,#050f05,#0a1a0a)',
+    accent:'#fbbf24',
+    cost:'ベット自由設定',
+  },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+const KEY_MEDALS   = 'arcade_main_medals';
+const KEY_BEST     = 'arcade_main_best';
+const KEY_PLAYS    = 'arcade_main_plays';
+const KEY_NAME     = 'arcade_player_name';
+const KEY_RANKING  = 'arcade_ranking';
+
+let medals  = +localStorage.getItem(KEY_MEDALS) || 300;
+let best    = +localStorage.getItem(KEY_BEST)   || medals;
+let plays   = +localStorage.getItem(KEY_PLAYS)  || 0;
+let myName  = localStorage.getItem(KEY_NAME)    || 'あなた';
+
+function save(){
+  localStorage.setItem(KEY_MEDALS, medals);
+  if(medals > best){ best = medals; localStorage.setItem(KEY_BEST, best); }
+  localStorage.setItem(KEY_PLAYS, plays);
+}
+
+// ============================================================
+// RANKING (localStorage simple leaderboard)
+// ============================================================
+const DUMMY_PLAYERS = [
+  {name:'なつき',  medals:2480, plays:42, avatar:'🌸'},
+  {name:'たろう',  medals:1950, plays:38, avatar:'⚡'},
+  {name:'はなこ',  medals:1620, plays:29, avatar:'🌺'},
+  {name:'けんじ',  medals:1190, plays:22, avatar:'🔥'},
+  {name:'ゆいな',  medals:870,  plays:18, avatar:'🌙'},
+  {name:'さくら',  medals:650,  plays:14, avatar:'🌷'},
+  {name:'ひろき',  medals:430,  plays:11, avatar:'🎯'},
+  {name:'みさき',  medals:310,  plays:8,  avatar:'⭐'},
+];
+
+function getMyRankEntry(){
+  return {name:myName, medals:medals, plays:plays, avatar:'👤', isMe:true};
+}
+
+function buildRanking(){
+  const entries = [...DUMMY_PLAYERS, getMyRankEntry()];
+  entries.sort((a,b)=>b.medals - a.medals);
+  return entries;
+}
+
+function renderRanking(){
+  const list = buildRanking();
+  const el   = document.getElementById('ranking-list');
+  const numClass = i => i===0?'gold':i===1?'silver':i===2?'bronze':'';
+  const medal_icon = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+
+  el.innerHTML = list.slice(0,10).map((p,i)=>{
+    const me = p.isMe;
+    const ch = me ? '' : (Math.random()<.5?'up':'same');
+    const chIcon = ch==='up'?'▲ 1':ch==='down'?'▼ 1':'—';
+    return `
+    <div class="rank-row ${me?'me':''}">
+      <div class="rank-num ${numClass(i)}">${medal_icon(i)||i+1}</div>
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <div class="rank-avatar">${p.avatar}</div>
+        <div class="rank-name-wrap">
+          <div class="rank-name ${me?'me-label':''}">${p.name}${me?' (あなた)':''}</div>
+          <div class="rank-sub">ゲーム回数 ${p.plays}回</div>
+        </div>
+      </div>
+      <div class="rank-medals">🪙 ${p.medals.toLocaleString()}</div>
+      <div class="rank-change ${ch}">${me?'':chIcon}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// UI UPDATES
+// ============================================================
+function updateHUD(){
+  document.getElementById('hud-medals').textContent = medals.toLocaleString();
+  document.getElementById('hud-best').textContent   = best.toLocaleString();
+  document.getElementById('hud-plays').textContent  = plays;
+}
+
+function notify(msg, type='info'){
+  const el = document.getElementById('notif');
+  el.textContent = msg; el.className = `show ${type}`;
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='', 2400);
+}
+
+// ============================================================
+// GAME GRID
+// ============================================================
+function buildGrid(){
+  const grid = document.getElementById('game-grid');
+  grid.innerHTML = GAMES.map(g=>`
+    <a class="game-card" href="${BASE}${g.file}" style="--card-accent:${g.accent};--card-bg:${g.bg}" data-game="${g.id}">
+      <div class="card-banner" style="background:${g.bg}">${g.icon}</div>
+      <div class="card-body">
+        <div class="card-name">${g.name}</div>
+        <div class="card-desc">${g.desc}</div>
+        <div class="card-tags">${g.tags.map(t=>`<span class="tag ${t}">${tagLabel(t)}</span>`).join('')}</div>
+      </div>
+      <div class="card-footer">
+        <div class="card-cost">💰 <strong>${g.cost}</strong></div>
+        <div class="play-btn" style="background:${g.accent}">PLAY →</div>
+      </div>
+    </a>
+  `).join('');
+
+  // Count play on click
+  grid.querySelectorAll('.game-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      plays++;save();updateHUD();renderRanking();
+    });
+  });
+}
+function tagLabel(t){return{hot:'🔥 人気',new:'✨ NEW',popular:'⭐ おすすめ',free:'🆓 無料'}[t]||t}
+
+// ============================================================
+// MEDAL CONTROLS
+// ============================================================
+document.getElementById('btn-add').addEventListener('click',()=>{
+  const v = +document.getElementById('medal-input').value;
+  if(!v||v<=0||v>9999) return notify('1〜9999の数値を入力してください','bad');
+  medals += v; save(); updateHUD(); renderRanking();
+  notify(`＋${v}メダル追加しました！`,'ok');
+  document.getElementById('medal-input').value='';
+});
+
+document.getElementById('btn-set').addEventListener('click',()=>{
+  const v = +document.getElementById('medal-input').value;
+  if(!v||v<=0||v>9999) return notify('1〜9999の数値を入力してください','bad');
+  medals = v; save(); updateHUD(); renderRanking();
+  notify(`メダルを${v}枚にセットしました`,'ok');
+  document.getElementById('medal-input').value='';
+});
+
+document.getElementById('btn-reset').addEventListener('click',()=>{
+  document.getElementById('modal').classList.add('open');
+});
+document.getElementById('modal-cancel').addEventListener('click',()=>{
+  document.getElementById('modal').classList.remove('open');
+});
+document.getElementById('modal-confirm').addEventListener('click',()=>{
+  medals=300; best=300; plays=0;
+  save(); localStorage.setItem(KEY_BEST,300); localStorage.setItem(KEY_PLAYS,0);
+  updateHUD(); renderRanking();
+  document.getElementById('modal').classList.remove('open');
+  notify('リセットしました（300メダル）','info');
+});
+document.getElementById('modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');
+});
+
+// ============================================================
+// PLAYER NAME
+// ============================================================
+document.getElementById('name-input').value = myName !== 'あなた' ? myName : '';
+document.getElementById('name-save-btn').addEventListener('click',()=>{
+  const v = document.getElementById('name-input').value.trim();
+  if(!v) return notify('名前を入力してください','bad');
+  myName = v; localStorage.setItem(KEY_NAME, myName);
+  renderRanking(); notify(`「${myName}」で登録しました！`,'ok');
+});
+
+// ============================================================
+// STARS
+// ============================================================
+function buildStars(){
+  const container = document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const s = document.createElement('div');
+    s.className='star';
+    const size = Math.random()*2.5+0.5;
+    s.style.cssText=`width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--del:${Math.random()*5}s`;
+    container.appendChild(s);
+  }
+}
+
+// ============================================================
+// SYNC: 各ゲームのlocalStorageメダルをメイン画面のメダルと同期
+// ============================================================
+// ゲームファイルのlocalStorageキー（各ゲームで使用しているキー）
+const GAME_KEYS = {
+  juggler:  'jug_medals',
+  tetris:   'tet_medals',
+  poker:    'poker_medals',
+  pachinko: 'pach_medals',
+  slots:    'sl_medals',
+  blackjack:'bj_medals',
+};
+
+function syncFromGames(){
+  // 各ゲームのメダルを確認して最大値をメインに反映
+  let changed = false;
+  Object.values(GAME_KEYS).forEach(key=>{
+    const v = +localStorage.getItem(key);
+    if(v && v !== medals){
+      // ゲームから戻ってきた場合、最後に更新されたゲームのメダルをメインに同期
+    }
+  });
+}
+
+// ゲームカードをクリックしたとき：メインのメダル数を各ゲームへ渡す
+function pushMedalsToGames(){
+  Object.entries(GAME_KEYS).forEach(([game, key])=>{
+    const existing = localStorage.getItem(key);
+    // まだ値がなければメインから引き継ぐ
+    if(!existing){
+      localStorage.setItem(key, medals);
+    }
+  });
+}
+
+// ページが見えるようになったとき（ゲームから戻ってきたとき）に同期
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    // 各ゲームの残高を集計して最大値をメインへ
+    let maxVal = medals;
+    let latestKey = null;
+    let latestTime = 0;
+    // localStorageの更新時刻は取れないので、値が変わっていたら反映
+    Object.entries(GAME_KEYS).forEach(([game, key])=>{
+      const v = +localStorage.getItem(key);
+      if(v && v !== medals) { maxVal = v; latestKey = key; }
+    });
+    if(latestKey){
+      medals = maxVal;
+      save();updateHUD();renderRanking();
+      notify('ゲームのメダルを同期しました','info');
+    }
+  }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+buildStars();
+buildGrid();
+updateHUD();
+renderRanking();
+pushMedalsToGames();
+
+// ゲームにメダルを渡すためクリック時も同期
+document.getElementById('game-grid').addEventListener('click',()=>{
+  // メインのメダルを全ゲームへ書き込む
+  Object.entries(GAME_KEYS).forEach(([game, key])=>{
+    localStorage.setItem(key, medals);
+  });
+});
+</script>
+</body>
+</html>
